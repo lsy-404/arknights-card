@@ -7,7 +7,7 @@
     "test": "npm run test:unit && npm run test:browser",
     "preview": "node test/server.mjs",
     "test:unit": "node --test test/*.test.js",
-    "test:browser": "node test/qr.browser.test.cjs && node test/rich-text.browser.test.cjs && node test/profile-integration.browser.test.cjs"
+    "test:browser": "node test/qr.browser.test.cjs && node test/rich-text.browser.test.cjs && node test/profile-integration.browser.test.cjs && node test/classic-editor-layout.browser.test.cjs"
   },
   "engines": {
     "node": ">=22"

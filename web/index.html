@@ -3,8 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f5f5f2" />
+    <meta name="theme-color" content="#f3f4f1" />
     <title>博士扩列档案 · 明日方舟同人</title>
+    <link rel="stylesheet" href="./fonts.css" />
     <link rel="stylesheet" href="./style.css" />
     <link rel="stylesheet" href="./qr.css" />
     <link rel="stylesheet" href="./rich-text.css" />
@@ -15,60 +16,141 @@
       <a class="wordmark" href="#top"><span class="mark">RI</span><span>博士扩列档案</span></a>
       <a id="home-link" href="https://tiny.leisiyu.dev/" hidden>返回 Tiny Projects ↗</a>
     </header>
-    <main id="top">
-      <section class="controls" aria-label="档案编辑工具">
-        <div class="control-row">
-          <label>阵营<select id="faction-select"></select></label>
-          <label class="quote-default">默认语录<input id="quote-default" type="text" readonly /></label>
-          <button id="restore-quote" type="button">恢复默认</button>
-          <label>头像<input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" /></label>
-          <button id="remove-avatar" type="button">移除头像</button>
-          <label>二维码数量<select id="qr-count"><option value="1">1 个</option><option value="2" selected>2 个</option></select></label>
-          <button id="operator-open" type="button">＋ 选择干员</button>
-          <label>导出<select id="export-scale"><option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option></select></label>
-          <button id="export-button" class="primary" type="button">导出 PNG</button>
-        </div>
-        <div id="richtext-toolbar" class="toolbar"></div>
-        <div class="control-row qr-controls">
-          <div class="qr-slot" data-qr-slot="qr1"><b>左侧二维码</b><select class="qr-type"><option value="wechat">微信</option><option value="qq">QQ</option></select><label>导入<input class="qr-file" type="file" accept="image/png,image/jpeg,image/webp" /></label><button class="upload-link" type="button">选择图片</button><button class="crop-link" type="button" hidden>调整裁切</button><button class="clear-qr" type="button">清除</button><span class="qr-status" aria-live="polite"></span></div>
-          <div class="qr-slot" data-qr-slot="qr2"><b>第二个二维码</b><select class="qr-type"><option value="qq">QQ</option><option value="wechat">微信</option></select><label>导入<input class="qr-file" type="file" accept="image/png,image/jpeg,image/webp" /></label><button class="upload-link" type="button">选择图片</button><button class="crop-link" type="button" hidden>调整裁切</button><button class="clear-qr" type="button">清除</button><span class="qr-status" aria-live="polite"></span></div>
-          <span id="export-status" role="status"></span>
-        </div>
-      </section>
-      <section class="sheet-scroll" aria-label="原尺寸档案画布">
-        <p class="sheet-help">直接点卡片文字填写，点选高亮，拖动刻度</p>
-        <div id="sheet" class="sheet">
-          <canvas id="profile-canvas" width="1640" height="2360" aria-label="博士扩列档案卡"></canvas>
-          <div id="sheet-editors" class="sheet-editors">
-            <div id="field-nickname" class="rich-field nickname" aria-label="昵称"></div>
-            <div id="field-motto" class="rich-field motto" aria-label="阵营格言"></div>
-            <div id="field-quote" class="rich-field quote" aria-label="阵营语录"></div>
-            <div id="field-oshi" class="rich-field oshi" aria-label="我推的角色"></div>
-            <div id="field-extra" class="rich-field extra" aria-label="补充说明"></div>
-            <div id="choice-gender" class="choice-hit" role="group" aria-label="性别"></div>
-            <div id="choice-contact" class="choice-hit" role="group" aria-label="想扩列"></div>
-            <div id="choice-server" class="choice-hit" role="group" aria-label="区服"></div>
-            <div id="choice-seniority" class="choice-hit" role="group" aria-label="资历"></div>
-            <div id="choice-focus" class="choice-hit" role="group" aria-label="更侧重"></div>
-            <div id="slider-layer" class="slider-layer"></div>
-            <button id="avatar-hit" class="avatar-hit" type="button" aria-label="更换头像"></button>
-            <button id="qr-hit-1" class="qr-hit" type="button" aria-label="导入左侧二维码"></button>
-            <button id="qr-hit-2" class="qr-hit" type="button" aria-label="导入第二个二维码"></button>
+    <main id="top" class="workspace">
+      <section class="editor-panel" aria-labelledby="editor-title">
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">DOCTOR NETWORKING PROFILE</p>
+            <h1 id="editor-title">博士扩列档案</h1>
           </div>
         </div>
+        <div id="richtext-toolbar" class="toolbar" aria-label="文字格式"></div>
+
+        <form id="profile-form">
+          <section class="form-section" aria-labelledby="identity-title">
+            <div class="section-heading"><span>01</span><h2 id="identity-title">基础信息</h2></div>
+            <label class="field rich-field-label">卡片昵称
+              <div id="field-nickname" class="rich-field nickname" aria-label="昵称"></div>
+            </label>
+            <div class="field-grid">
+              <fieldset id="choice-gender" class="field choice-field"><legend>性别</legend></fieldset>
+              <fieldset id="choice-server" class="field choice-field"><legend>所在区服</legend></fieldset>
+              <fieldset id="choice-seniority" class="field choice-field span-2"><legend>罗德岛资历</legend></fieldset>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="contact-title">
+            <div class="section-heading"><span>02</span><h2 id="contact-title">交流偏好</h2></div>
+            <fieldset id="choice-contact" class="field choice-field"><legend>想扩列</legend></fieldset>
+            <fieldset id="choice-focus" class="field choice-field"><legend>更侧重</legend></fieldset>
+            <label class="field rich-field-label">我推的角色 / CP / CB
+              <div id="field-oshi" class="rich-field oshi" aria-label="我推的角色"></div>
+            </label>
+          </section>
+
+          <section class="form-section" aria-labelledby="faction-title">
+            <div class="section-heading"><span>03</span><h2 id="faction-title">所属阵营</h2></div>
+            <label class="field">选择阵营
+              <select id="faction-select" aria-label="所属阵营"></select>
+            </label>
+            <label class="field rich-field-label">阵营格言
+              <div id="field-motto" class="rich-field motto" aria-label="阵营格言"></div>
+            </label>
+            <div class="field rich-field-label quote-field">
+              <label for="quote-default">阵营默认语录</label>
+              <div class="quote-tools">
+                <input id="quote-default" type="text" readonly aria-label="阵营默认语录" />
+                <button id="restore-quote" type="button" class="quiet-button">恢复默认</button>
+              </div>
+              <div id="field-quote" class="rich-field quote" aria-label="阵营语录"></div>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="preferences-title">
+            <div class="section-heading"><span>04</span><h2 id="preferences-title">偏好参数</h2></div>
+            <div id="slider-layer" class="slider-list" aria-label="偏好滑块"></div>
+          </section>
+
+          <section class="form-section" aria-labelledby="materials-title">
+            <div class="section-heading"><span>05</span><h2 id="materials-title">个人素材</h2></div>
+            <div class="upload-row">
+              <label for="avatar-file">头像</label>
+              <input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+              <button id="remove-avatar" type="button" class="quiet-button">移除头像</button>
+            </div>
+            <div class="field qr-count-field">
+              <label for="qr-count">二维码数量</label>
+              <select id="qr-count"><option value="1">1 个</option><option value="2" selected>2 个</option></select>
+            </div>
+            <div class="qr-grid">
+              <section class="qr-slot" data-qr-slot="qr1" aria-label="二维码 1">
+                <div class="qr-title"><b>二维码 1</b><button type="button" class="clear-qr quiet-button">清除</button></div>
+                <label class="qr-import">导入图片<input class="qr-file" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+                <button type="button" class="upload-link quiet-button">选择图片</button>
+                <button type="button" class="crop-link quiet-button" hidden>调整裁切</button>
+                <span class="qr-status" aria-live="polite"></span>
+              </section>
+              <section class="qr-slot" data-qr-slot="qr2" aria-label="二维码 2">
+                <div class="qr-title"><b>二维码 2</b><button type="button" class="clear-qr quiet-button">清除</button></div>
+                <label class="qr-import">导入图片<input class="qr-file" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+                <button type="button" class="upload-link quiet-button">选择图片</button>
+                <button type="button" class="crop-link quiet-button" hidden>调整裁切</button>
+                <span class="qr-status" aria-live="polite"></span>
+              </section>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="operators-title">
+            <div class="section-heading"><span>06</span><h2 id="operators-title">代表干员</h2></div>
+            <div class="operator-block">
+              <button id="operator-open" type="button" class="quiet-button">选择干员</button>
+              <div id="selected-operators" class="selected-operators" aria-live="polite"></div>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="extra-title">
+            <div class="section-heading"><span>07</span><h2 id="extra-title">补充说明</h2></div>
+            <label class="field rich-field-label">想对新朋友说
+              <div id="field-extra" class="rich-field extra" aria-label="补充说明"></div>
+            </label>
+          </section>
+
+          <section class="form-section output-settings" aria-label="导出设置">
+            <label class="attribution-toggle"><input id="show-attribution" type="checkbox" checked />显示生成信息</label>
+            <label class="field">导出清晰度
+              <select id="export-scale"><option value="1">标准 · 1×</option><option value="2" selected>高清 · 2×</option><option value="3">超清 · 3×</option></select>
+            </label>
+          </section>
+        </form>
       </section>
-      <footer class="credits">
-        <span>原作 <a href="https://www.xiaohongshu.com/user/profile/647e0cd800000000250355fe" target="_blank" rel="noreferrer">Sayoko.</a> · 表单化 <a href="https://tiny.leisiyu.dev/" target="_blank" rel="noreferrer">暝行镌无</a></span>
-        <span>游戏素材 鹰角网络 · <a href="./ASSET-SOURCES.md">素材来源</a> · <a href="./QUOTE-SOURCES.md">原句来源</a> · 非商用</span>
-      </footer>
-      <dialog id="operator-dialog" class="operator-dialog">
-        <header><h2>选择代表干员 <small>最多 8 位</small></h2><button id="operator-close" type="button">完成</button></header>
-        <label class="operator-search">搜索干员<input id="operator-search" type="search" placeholder="姓名、拼音、首字母或英文" autocomplete="off" /></label>
-        <div id="selected-operators" class="selected-operators"></div>
-        <div id="operator-results" class="operator-results"></div>
-        <button id="operator-more" type="button">加载更多</button>
-      </dialog>
+
+      <aside class="preview-panel" aria-labelledby="preview-title">
+        <div class="preview-head">
+          <div><span class="eyebrow">PROFILE PREVIEW</span><h2 id="preview-title">档案预览</h2></div>
+        </div>
+        <div class="preview-stage">
+          <div id="sheet" class="sheet"><canvas id="profile-canvas" width="1640" height="2360" aria-label="博士扩列档案卡"></canvas></div>
+        </div>
+        <div class="export-controls">
+          <button id="export-button" class="primary-button" type="button">导出 PNG</button>
+          <p id="export-status" class="export-status" role="status" aria-live="polite"></p>
+        </div>
+        <footer class="credits">
+          <span>原作 <a href="https://www.xiaohongshu.com/user/profile/647e0cd800000000250355fe" target="_blank" rel="noreferrer">Sayoko.</a></span>
+          <span>表单化 <a href="https://tiny.leisiyu.dev/" target="_blank" rel="noreferrer">暝行镌无</a></span>
+          <span>游戏素材：鹰角网络 / PRTS · 非商业同人作品</span>
+          <a href="./ASSET-SOURCES.md">素材来源</a>
+          <a href="./QUOTE-SOURCES.md">原句来源</a>
+        </footer>
+      </aside>
     </main>
+
+    <dialog id="operator-dialog" class="operator-dialog">
+      <header><h2>选择代表干员 <small>最多 8 位</small></h2><button id="operator-close" type="button">完成</button></header>
+      <label class="operator-search">搜索干员<input id="operator-search" type="search" placeholder="姓名、拼音、首字母或英文" autocomplete="off" /></label>
+      <div id="operator-results" class="operator-results"></div>
+      <button id="operator-more" type="button">加载更多</button>
+    </dialog>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

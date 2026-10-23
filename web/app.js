@@ -2,14 +2,13 @@ import { factions } from "./data.js";
 import { detectAndCrop, openCropEditor } from "./qr.js";
 import { drawProfile, imageFromFile } from "./render.js";
 import { createRichText, setupRichTextToolbar } from "./rich-text.js";
-import { factionMotto, LAYOUT, mottoFontSize, OPTIONS, SHEET, SLIDERS, quoteLayout } from "./layout.js";
-import { markerSeed, markerStyle } from "./marker.js";
+import { factionMotto, mottoFontSize, OPTIONS, SHEET, SLIDERS, quoteLayout } from "./layout.js";
+import { markerSeed } from "./marker.js";
 import { operators } from "./operators.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const canvas = $("#profile-canvas");
-const sheet = $("#sheet");
 const factionSelect = $("#faction-select");
 const qrRuns = new WeakMap();
 const qrFiles = new WeakMap();
@@ -20,7 +19,6 @@ let currentQrSlot = null;
 let avatarRun = 0;
 let searchLimit = 60;
 let searchQuery = "";
-let quoteState = { quote: "", motto: "" };
 const selectedOperators = new Set();
 const sliders = Object.fromEntries(SLIDERS.map(item => [item.key, item.value]));
 const sliderTouched = new Set();
@@ -38,7 +36,7 @@ factionSelect.innerHTML = factions.map(item => `<option value="${esc(item.id)}">
 setupRichTextToolbar($("#richtext-toolbar"));
 
 for (const [key, label, initialText, placeholder, size, maxLength] of [
-  ["nickname", "#field-nickname", plain.nickname, "此处填写名字", 80, 24],
+  ["nickname", "#field-nickname", plain.nickname, "此处填写名字", 132, 24],
   ["motto", "#field-motto", "", "阵营格言", 19, 300],
   ["quote", "#field-quote", "", "阵营语录", 16, 300],
   ["oshi", "#field-oshi", "", "我的角色 / CP / CB", 24, 60],
@@ -49,8 +47,7 @@ for (const [key, label, initialText, placeholder, size, maxLength] of [
 
 function updateQuoteSize() {
   const editor = $("#field-quote .rich-text-editor");
-  const field = $("#field-quote"), rect = quoteLayout(plain.quote, document.createElement("canvas").getContext("2d"));
-  Object.assign(field.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+  const rect = quoteLayout(plain.quote, document.createElement("canvas").getContext("2d"));
   if (editor) {
     editor.style.setProperty("--rich-text-default-size", `${rect.fontSize}px`);
     editor.querySelector(".ql-editor").style.lineHeight = "1.05";
@@ -71,9 +68,8 @@ function chooseFaction(id) {
   faction = next;
   factionSelect.value = faction.id;
   document.documentElement.style.setProperty("--accent", faction.color || "#61b9e6");
-  quoteState = { quote: faction.quote || "", motto: factionMotto(faction) };
-  plain.quote = quoteState.quote;
-  plain.motto = quoteState.motto;
+  plain.quote = faction.quote || "";
+  plain.motto = factionMotto(faction);
   richText.quote.setText(plain.quote);
   richText.motto.setText(plain.motto);
   updateQuoteSize();
@@ -102,105 +98,66 @@ function readProfile() {
     seniority: [...selection.seniority],
     focus: [...selection.focus],
     qrCount: $("#qr-count").value,
-    qrTypes: $$(".qr-type").map(select => select.value),
+    showAttribution: $("#show-attribution").checked,
     selections: { gender: selection.gender, contact: [...selection.contact], server: [...selection.server], seniority: [...selection.seniority], focus: [...selection.focus] },
   };
 }
 
 function makeChoices() {
-  const rowYs = Object.fromEntries(Object.keys(OPTIONS).map((group, index) => [group, LAYOUT.optionTextTopRows[index]]));
-  const measure = document.createElement("canvas").getContext("2d");
   for (const [group, options] of Object.entries(OPTIONS)) {
     const host = $(`#choice-${group}`);
-    host.innerHTML = "";
-    const size = group === "focus" ? 26 : 29;
-    measure.font = `700 ${size}px Arial, "Microsoft YaHei", "Noto Sans SC", sans-serif`;
-    let x = LAYOUT.optionStartX;
-    options.forEach((value, index) => {
+    let buttons = $(".choice-buttons", host);
+    if (!buttons) { buttons = document.createElement("div"); buttons.className = "choice-buttons"; host.append(buttons); }
+    buttons.replaceChildren(...options.map(value => {
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.group = group;
       button.dataset.value = value;
       button.setAttribute("aria-pressed", String(isSelected(group, value)));
-      button.textContent = value + (index < options.length - 1 ? "/" : "");
-      const width = Math.ceil(measure.measureText(button.textContent).width) + 5;
-      Object.assign(button.style, { position: "absolute", left: `${x}px`, top: `${rowYs[group]}px`, width: `${width}px`, height: "44px", padding: "0", textAlign: "left", color: "#171918", fontFamily: 'Arial, "Microsoft YaHei", "Noto Sans SC", sans-serif', fontSize: `${size}px`, fontWeight: "700", "--marker": "#63c4ed" });
-      host.append(button);
-      refreshMarker(button);
-      x += width;
-    });
+      button.textContent = value;
+      return button;
+    }));
   }
 }
-$("#sheet-editors").addEventListener("click", event => {
+$("#profile-form").addEventListener("submit", event => event.preventDefault());
+$("#profile-form").addEventListener("click", event => {
   const button = event.target.closest("button[data-group]");
   if (!button) return;
   const { group, value } = button.dataset;
   if (group === "gender") selection.gender = value;
-  else {
-    if (selection[group].has(value)) selection[group].delete(value);
-    else selection[group].add(value);
-  }
+  else if (selection[group].has(value)) selection[group].delete(value);
+  else selection[group].add(value);
   markerSeeds[`${group}:${value}`] = markerSeed();
-  makeChoices(); render();
+  render();
 });
 function isSelected(group, value) { return group === "gender" ? selection.gender === value : selection[group].has(value); }
-function refreshMarker(button) {
-  const { group, value } = button.dataset;
-  const seed = markerSeeds[`${group}:${value}`] || 1;
-  const active = isSelected(group, value);
-  const style = markerStyle(seed);
-  button.style.setProperty("--tilt", `${style.tilt}rad`);
-  button.style.setProperty("--marker-alpha", style.opacity);
-  button.style.setProperty("--marker-shape", `polygon(${style.points.map(([x, y]) => `${x}% ${y}%`).join(",")})`);
-  button.classList.toggle("selected", active);
-  button.setAttribute("aria-pressed", String(active));
-}
 
 function makeSliders() {
   const layer = $("#slider-layer");
-  layer.innerHTML = "";
-  const trackYs = [1220, 1352, 1477, 1631, 1768, 1915, 2057];
-  const trackXs = [121, 122, 123, 123, 120, 117, 121];
-  const trackX2s = [498, 500, 501, 501, 498, 495, 499];
-  SLIDERS.forEach((item, i) => {
+  layer.replaceChildren(...SLIDERS.map(item => {
+    const row = document.createElement("label");
+    row.className = "slider-row";
+    const title = document.createElement("span"); title.textContent = item.title;
+    const control = document.createElement("span"); control.className = "slider-control";
     const input = document.createElement("input");
-    input.type = "range"; input.min = "0"; input.max = "100"; input.value = sliders[item.key]; input.setAttribute("aria-label", item.title);
-    input.dataset.key = item.key;
-    Object.assign(input.style, { position: "absolute", left: `${trackXs[i]}px`, top: `${trackYs[i] - 17}px`, width: `${trackX2s[i] - trackXs[i]}px`, height: "34px" });
-    input.addEventListener("input", () => { sliders[item.key] = Number(input.value); sliderTouched.add(item.key); input.classList.add("touched"); render(); });
-    layer.append(input);
-  });
+    input.type = "range"; input.min = "0"; input.max = "100"; input.step = "1";
+    input.value = sliders[item.key]; input.setAttribute("aria-label", item.title); input.dataset.key = item.key;
+    const endpoints = document.createElement("span"); endpoints.className = "slider-endpoints";
+    for (const value of [item.left, item.mid, item.right]) { const label = document.createElement("span"); label.textContent = value; endpoints.append(label); }
+    const output = document.createElement("output"); output.textContent = input.value;
+    input.addEventListener("input", () => { sliders[item.key] = Number(input.value); sliderTouched.add(item.key); output.textContent = input.value; render(); });
+    control.append(input, endpoints); row.append(title, control, output);
+    return row;
+  }));
 }
 
 function render() {
   const ops = operators.filter(item => selectedOperators.has(item.id));
-  drawProfile(canvas, readProfile(), faction, ops, images, { editing: true });
-  for (const button of $$("button[data-group]")) refreshMarker(button);
+  drawProfile(canvas, readProfile(), faction, ops, images, { editing: false });
+  for (const button of $$("button[data-group]")) button.setAttribute("aria-pressed", String(isSelected(button.dataset.group, button.dataset.value)));
   renderSelectedOperators();
 }
 
-function fitSheet() {
-  placeRichFields();
-  Object.assign($("#avatar-hit").style, { left: `${LAYOUT.portrait.x}px`, top: `${LAYOUT.portrait.y}px`, width: `${LAYOUT.portrait.width}px`, height: `${LAYOUT.portrait.height}px` });
-  for (const [index, rect] of LAYOUT.qr.entries()) {
-    Object.assign($(`#qr-hit-${index + 1}`).style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px` });
-  }
-  $("#sheet-editors").style.transform = `scale(${sheet.clientWidth / SHEET.width})`;
-}
-function placeRichFields() {
-  const rects = {
-    nickname: LAYOUT.nickname,
-    motto: LAYOUT.motto,
-    quote: quoteLayout(plain.quote, document.createElement("canvas").getContext("2d")),
-    oshi: LAYOUT.oshi,
-    extra: LAYOUT.extra,
-  };
-  for (const [key, rect] of Object.entries(rects)) {
-    Object.assign($(`#field-${key}`).style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px` });
-  }
-}
-new ResizeObserver(fitSheet).observe(sheet);
-fitSheet();
 
 function validImage(file, qr = false) {
   if (!file) return "没有选择文件。";
@@ -216,22 +173,8 @@ $("#avatar-file").addEventListener("change", async event => {
   catch (error) { $("#export-status").textContent = error.message; }
 });
 $("#remove-avatar").addEventListener("click", () => { avatarRun++; images.avatar = null; render(); });
-$("#avatar-hit").addEventListener("click", () => $("#avatar-file").click());
-$("#qr-count").addEventListener("change", () => { $("#qr-hit-2").hidden = $("#qr-count").value !== "2"; $$('.qr-slot')[1].hidden = $("#qr-count").value !== "2"; render(); });
-$("#qr-hit-1").addEventListener("click", () => $$('.qr-slot')[0].querySelector(".qr-file").click());
-$("#qr-hit-2").addEventListener("click", () => $$('.qr-slot')[1].querySelector(".qr-file").click());
-for (const [index, slot] of $$('.qr-slot').entries()) {
-  const hit = $(`#qr-hit-${index + 1}`);
-  hit.addEventListener("pointerenter", () => currentQrSlot = slot);
-  hit.addEventListener("focusin", () => currentQrSlot = slot);
-  hit.addEventListener("pointerleave", () => { if (currentQrSlot === slot) currentQrSlot = null; });
-  hit.addEventListener("dragover", event => event.preventDefault());
-  hit.addEventListener("drop", event => {
-    event.preventDefault();
-    const file = [...event.dataTransfer.files].find(item => item.type.startsWith("image/"));
-    if (file) handleQrFile(slot, file);
-  });
-}
+$("#qr-count").addEventListener("change", () => { $$('.qr-slot')[1].hidden = $("#qr-count").value !== "2"; render(); });
+$("#show-attribution").addEventListener("change", render);
 
 function qrKey(slot) { return slot.dataset.qrSlot; }
 function setQrStatus(slot, message, error = false) { const status = $(".qr-status", slot); status.textContent = message; status.classList.toggle("error", error); }
@@ -301,7 +244,8 @@ function renderSelectedOperators() {
   $$(".selected-pill").forEach(button => button.addEventListener("click", () => toggleOperator(button.dataset.remove)));
 }
 
-$("#export-button").addEventListener("click", () => {
+$("#export-button").addEventListener("click", async () => {
+  await document.fonts.ready;
   const factor = Number($("#export-scale").value), output = document.createElement("canvas");
   output.width = SHEET.width * factor; output.height = SHEET.height * factor;
   const profile = readProfile();
@@ -312,6 +256,8 @@ $("#export-button").addEventListener("click", () => {
   }, "image/png");
 });
 
+await Promise.allSettled([document.fonts.load('400 28px Arimo'), document.fonts.load('700 31px "Noto Sans SC"')]);
+await document.fonts.ready;
 makeChoices(); makeSliders(); chooseFaction(faction.id); renderOperatorResults();
 $("#restore-quote").addEventListener("click", () => {
   plain.quote = faction.quote || "";
@@ -323,4 +269,4 @@ $("#restore-quote").addEventListener("click", () => {
   $("#quote-default").value = plain.quote;
   render();
 });
-$$('.qr-type').forEach(select => select.addEventListener("change", render));
+

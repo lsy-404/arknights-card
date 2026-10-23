@@ -32,6 +32,7 @@ const server = http.createServer((request, response) => {
       css.href = '/web/rich-text.css';
       document.head.append(css);
       await new Promise((resolve) => { css.onload = resolve; });
+      await document.fonts.ready;
 
       const toolbar = document.createElement('div');
       toolbar.id = 'rich-text-test-toolbar';
@@ -151,6 +152,7 @@ const server = http.createServer((request, response) => {
 
     result.pixelComparison = await page.evaluate(async () => {
       const refs = window.richTextTest;
+      const { FONT } = await import('/web/typography.js');
       const editor = refs.calibrationNode.querySelector('.ql-editor');
       const toolbarSize = window.richTextTest.toolbar.querySelector('[aria-label="字号"]');
       const styleSelection = async (start, end, size) => {
@@ -171,7 +173,7 @@ const server = http.createServer((request, response) => {
       context.fillRect(0, 0, canvas.width, canvas.height);
       const { drawRichText } = await import('/web/rich-text-render.js');
       drawRichText(context, runs, {
-        x: 0, y: 0, width: canvas.width, height: canvas.height, fontSize: 28,
+        x: 0, y: 0, width: canvas.width, height: canvas.height, fontSize: 28, fontFamily: FONT,
       });
       await refs.selectText(refs.oversizedNode.querySelector('.ql-editor'), 0, 5);
       toolbarSize.value = '200px';
@@ -185,7 +187,7 @@ const server = http.createServer((request, response) => {
       oversizedContext.fillStyle = '#ffffff';
       oversizedContext.fillRect(0, 0, oversizedCanvas.width, oversizedCanvas.height);
       drawRichText(oversizedContext, oversizedRuns, {
-        x: 0, y: 0, width: oversizedCanvas.width, height: oversizedCanvas.height, fontSize: 28,
+        x: 0, y: 0, width: oversizedCanvas.width, height: oversizedCanvas.height, fontSize: 28, fontFamily: FONT,
       });
       document.activeElement.blur();
       getSelection().removeAllRanges();

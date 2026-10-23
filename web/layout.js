@@ -1,11 +1,12 @@
 import { drawRichText } from "./rich-text-render.js";
+import { FONT } from "./typography.js";
 
 export const SHEET = Object.freeze({ width: 1640, height: 2360 });
 export const LAYOUT = Object.freeze({
   barcode: { x: 1292, y: 80, width: 220, height: 58 },
   headerRule: { x1: 115, y: 161.5, x2: 1526 },
   title: { x: 120, y: 201, width: 334, height: 32 },
-  nickname: { x: 400, y: 347, width: 760, height: 120 },
+  nickname: { x: 400, y: 330, width: 760, height: 150 },
   portrait: { x: 1044, y: 438, width: 350, height: 350 },
   qr: [{ x: 570, y: 486, width: 200, height: 200 }, { x: 790, y: 486, width: 200, height: 200 }],
   motto: { x: 293, y: 604, width: 270, height: 125 },
@@ -24,7 +25,7 @@ export const LAYOUT = Object.freeze({
   bottomQuote: { x: 1120, y: 2149, width: 380, height: 48 },
 });
 
-export function quoteLayout(text, context, fontFamily = 'Arial, "Microsoft YaHei", "Noto Sans SC", sans-serif') {
+export function quoteLayout(text, context, fontFamily = FONT) {
   const value = String(text ?? "");
   const widthUnits = [...value].reduce((sum, character) => sum + (/[^\u0000-\u00ff]/u.test(character) ? 1 : /\s/.test(character) ? 0.25 : /[il.,'!]/i.test(character) ? 0.28 : 0.48), 0);
   const wide = [...value].length > 48 || widthUnits > 26;

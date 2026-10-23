@@ -16,3 +16,4 @@
 | 011 | [Feature] operator_catalog | PRTS完整434干员与来源索引 | 完整干员搜索 | ✅ 已完成 |
 | 012 | [Test] editor_integration | 综合导出、条码、二维码、阵营验证 | 验证可观察行为 | ✅ 已完成 |
 | 013 | [Polish] interface_copy | 移除实现说明和原始异常文案 | 清理UI泄露 | ✅ 已完成 |
+| 014 | [Update] classic_editor | 恢复表单与预览、整行选项、标题字体及可关闭浅色署名 | 用户调整编辑体验与排版 | 🔄 进行中 |

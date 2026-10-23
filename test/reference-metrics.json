@@ -1,0 +1,927 @@
+{
+  "source": {
+    "file": "set1-2.jpg",
+    "width": 1640,
+    "height": 2360
+  },
+  "text_fits": {
+    "tag_cn": {
+      "text": "个人档案",
+      "observed_bbox": [
+        124,
+        200,
+        222,
+        229
+      ],
+      "top_fits": [
+        {
+          "dice": 0.4449,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 26,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            2
+          ],
+          "render_bbox_size": [
+            102,
+            26
+          ]
+        },
+        {
+          "dice": 0.3693,
+          "font": "Microsoft YaHei",
+          "size_px": 26,
+          "weight": null,
+          "threshold": 160,
+          "shift_px": [
+            -2,
+            2
+          ],
+          "render_bbox_size": [
+            102,
+            26
+          ]
+        },
+        {
+          "dice": 0.3636,
+          "font": "Microsoft YaHei",
+          "size_px": 25,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            2
+          ],
+          "render_bbox_size": [
+            98,
+            26
+          ]
+        }
+      ]
+    },
+    "basic_cn": {
+      "text": "基本信息",
+      "observed_bbox": [
+        134,
+        753,
+        222,
+        778
+      ],
+      "top_fits": [
+        {
+          "dice": 0.6399,
+          "font": "Noto Sans SC",
+          "size_px": 23,
+          "weight": 900,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            1
+          ],
+          "render_bbox_size": [
+            90,
+            22
+          ]
+        },
+        {
+          "dice": 0.6308,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 22,
+          "weight": null,
+          "threshold": 160,
+          "shift_px": [
+            2,
+            1
+          ],
+          "render_bbox_size": [
+            86,
+            22
+          ]
+        },
+        {
+          "dice": 0.6217,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 23,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            1
+          ],
+          "render_bbox_size": [
+            90,
+            22
+          ]
+        },
+        {
+          "dice": 0.5814,
+          "font": "Noto Sans SC",
+          "size_px": 23,
+          "weight": 700,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            1
+          ],
+          "render_bbox_size": [
+            90,
+            22
+          ]
+        },
+        {
+          "dice": 0.4896,
+          "font": "Microsoft YaHei",
+          "size_px": 23,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            1
+          ],
+          "render_bbox_size": [
+            90,
+            22
+          ]
+        },
+        {
+          "dice": 0.4523,
+          "font": "Microsoft YaHei",
+          "size_px": 22,
+          "weight": null,
+          "threshold": 128,
+          "shift_px": [
+            2,
+            1
+          ],
+          "render_bbox_size": [
+            86,
+            22
+          ]
+        }
+      ]
+    },
+    "gender_label": {
+      "text": "性　　别",
+      "observed_bbox": [
+        146,
+        801,
+        289,
+        834
+      ],
+      "top_fits": [
+        {
+          "dice": 0.8685,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 37,
+          "weight": null,
+          "threshold": 64,
+          "shift_px": [
+            -1,
+            0
+          ],
+          "render_bbox_size": [
+            145,
+            34
+          ]
+        },
+        {
+          "dice": 0.8602,
+          "font": "Noto Sans SC",
+          "size_px": 37,
+          "weight": 900,
+          "threshold": 64,
+          "shift_px": [
+            -1,
+            -1
+          ],
+          "render_bbox_size": [
+            145,
+            35
+          ]
+        },
+        {
+          "dice": 0.8359,
+          "font": "Noto Sans SC",
+          "size_px": 36,
+          "weight": 900,
+          "threshold": 192,
+          "shift_px": [
+            2,
+            -1
+          ],
+          "render_bbox_size": [
+            140,
+            34
+          ]
+        },
+        {
+          "dice": 0.8331,
+          "font": "Noto Sans SC",
+          "size_px": 37,
+          "weight": 700,
+          "threshold": 64,
+          "shift_px": [
+            -1,
+            -1
+          ],
+          "render_bbox_size": [
+            144,
+            35
+          ]
+        },
+        {
+          "dice": 0.8154,
+          "font": "Noto Sans SC",
+          "size_px": 36,
+          "weight": 700,
+          "threshold": 160,
+          "shift_px": [
+            1,
+            -1
+          ],
+          "render_bbox_size": [
+            140,
+            34
+          ]
+        },
+        {
+          "dice": 0.8133,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 36,
+          "weight": null,
+          "threshold": 160,
+          "shift_px": [
+            1,
+            -1
+          ],
+          "render_bbox_size": [
+            141,
+            35
+          ]
+        },
+        {
+          "dice": 0.7094,
+          "font": "Microsoft YaHei",
+          "size_px": 37,
+          "weight": null,
+          "threshold": 64,
+          "shift_px": [
+            -1,
+            -2
+          ],
+          "render_bbox_size": [
+            144,
+            35
+          ]
+        },
+        {
+          "dice": 0.6707,
+          "font": "Microsoft YaHei",
+          "size_px": 36,
+          "weight": null,
+          "threshold": 64,
+          "shift_px": [
+            2,
+            0
+          ],
+          "render_bbox_size": [
+            140,
+            34
+          ]
+        }
+      ]
+    },
+    "gender_values": {
+      "text": "女/男/其他",
+      "observed_bbox": [
+        386,
+        806,
+        538,
+        836
+      ],
+      "top_fits": [
+        {
+          "dice": 0.8097,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 31,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            0
+          ],
+          "render_bbox_size": [
+            153,
+            30
+          ]
+        },
+        {
+          "dice": 0.7563,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 32,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            -1
+          ],
+          "render_bbox_size": [
+            156,
+            31
+          ]
+        },
+        {
+          "dice": 0.6469,
+          "font": "SimHei",
+          "size_px": 31,
+          "weight": null,
+          "threshold": 64,
+          "shift_px": [
+            -1,
+            1
+          ],
+          "render_bbox_size": [
+            152,
+            28
+          ]
+        },
+        {
+          "dice": 0.6412,
+          "font": "Microsoft YaHei",
+          "size_px": 32,
+          "weight": null,
+          "threshold": 96,
+          "shift_px": [
+            -2,
+            -1
+          ],
+          "render_bbox_size": [
+            155,
+            31
+          ]
+        },
+        {
+          "dice": 0.6132,
+          "font": "Microsoft YaHei",
+          "size_px": 31,
+          "weight": null,
+          "threshold": 128,
+          "shift_px": [
+            2,
+            -1
+          ],
+          "render_bbox_size": [
+            149,
+            30
+          ]
+        },
+        {
+          "dice": 0.5492,
+          "font": "SimHei",
+          "size_px": 32,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            0
+          ],
+          "render_bbox_size": [
+            156,
+            29
+          ]
+        }
+      ]
+    },
+    "about_spend": {
+      "text": "关于氪金：",
+      "observed_bbox": [
+        120,
+        1152,
+        265,
+        1182
+      ],
+      "top_fits": [
+        {
+          "dice": 0.7842,
+          "font": "Noto Sans SC",
+          "size_px": 33,
+          "weight": 700,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            0
+          ],
+          "render_bbox_size": [
+            142,
+            31
+          ]
+        },
+        {
+          "dice": 0.7413,
+          "font": "Microsoft YaHei",
+          "size_px": 33,
+          "weight": null,
+          "threshold": 160,
+          "shift_px": [
+            -1,
+            0
+          ],
+          "render_bbox_size": [
+            141,
+            31
+          ]
+        },
+        {
+          "dice": 0.7316,
+          "font": "Noto Sans SC",
+          "size_px": 33,
+          "weight": 900,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            -1
+          ],
+          "render_bbox_size": [
+            143,
+            32
+          ]
+        },
+        {
+          "dice": 0.7171,
+          "font": "Noto Sans SC",
+          "size_px": 34,
+          "weight": 700,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            -1
+          ],
+          "render_bbox_size": [
+            145,
+            32
+          ]
+        },
+        {
+          "dice": 0.7149,
+          "font": "Microsoft YaHei Bold",
+          "size_px": 33,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            0
+          ],
+          "render_bbox_size": [
+            142,
+            32
+          ]
+        },
+        {
+          "dice": 0.6838,
+          "font": "Noto Sans SC",
+          "size_px": 34,
+          "weight": 900,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            -2
+          ],
+          "render_bbox_size": [
+            147,
+            33
+          ]
+        },
+        {
+          "dice": 0.6799,
+          "font": "Microsoft YaHei",
+          "size_px": 34,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            -1
+          ],
+          "render_bbox_size": [
+            146,
+            32
+          ]
+        },
+        {
+          "dice": 0.6729,
+          "font": "SimHei",
+          "size_px": 34,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            -1
+          ],
+          "render_bbox_size": [
+            144,
+            31
+          ]
+        }
+      ]
+    },
+    "Dr": {
+      "text": "Dr.",
+      "observed_bbox": [
+        212,
+        317,
+        388,
+        435
+      ],
+      "top_fits": []
+    },
+    "Doctor": {
+      "text": "Doctor",
+      "observed_bbox": [
+        198,
+        447,
+        331,
+        476
+      ],
+      "top_fits": [
+        {
+          "dice": 0.8048,
+          "font": "Arial Bold",
+          "size_px": 42,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            0
+          ],
+          "render_bbox_size": [
+            133,
+            30
+          ]
+        },
+        {
+          "dice": 0.7998,
+          "font": "Arial Bold",
+          "size_px": 43,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            -1
+          ],
+          "render_bbox_size": [
+            135,
+            31
+          ]
+        },
+        {
+          "dice": 0.7955,
+          "font": "Arial Bold",
+          "size_px": 41,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            1,
+            0
+          ],
+          "render_bbox_size": [
+            130,
+            30
+          ]
+        },
+        {
+          "dice": 0.6187,
+          "font": "Arial",
+          "size_px": 45,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            -2
+          ],
+          "render_bbox_size": [
+            131,
+            32
+          ]
+        }
+      ]
+    },
+    "B101": {
+      "text": "B101",
+      "observed_bbox": [
+        1415,
+        150,
+        1525,
+        186
+      ],
+      "top_fits": [
+        {
+          "dice": 0.3932,
+          "font": "Arial Bold",
+          "size_px": 50,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            0
+          ],
+          "render_bbox_size": [
+            108,
+            36
+          ]
+        },
+        {
+          "dice": 0.3815,
+          "font": "Arial Bold",
+          "size_px": 51,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            -1
+          ],
+          "render_bbox_size": [
+            109,
+            37
+          ]
+        },
+        {
+          "dice": 0.3729,
+          "font": "Arial Bold",
+          "size_px": 53,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -2,
+            -1
+          ],
+          "render_bbox_size": [
+            113,
+            38
+          ]
+        },
+        {
+          "dice": 0.3678,
+          "font": "Arial Bold",
+          "size_px": 52,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            -1,
+            -1
+          ],
+          "render_bbox_size": [
+            112,
+            37
+          ]
+        },
+        {
+          "dice": 0.3186,
+          "font": "Arial",
+          "size_px": 53,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            -2
+          ],
+          "render_bbox_size": [
+            109,
+            38
+          ]
+        },
+        {
+          "dice": 0.3109,
+          "font": "Arial",
+          "size_px": 52,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            1,
+            -1
+          ],
+          "render_bbox_size": [
+            108,
+            37
+          ]
+        },
+        {
+          "dice": 0.2993,
+          "font": "Arial",
+          "size_px": 54,
+          "weight": null,
+          "threshold": 192,
+          "shift_px": [
+            0,
+            -1
+          ],
+          "render_bbox_size": [
+            112,
+            39
+          ]
+        }
+      ]
+    }
+  },
+  "geometry": {
+    "barcode_bbox": [
+      1292,
+      80,
+      1513,
+      139
+    ],
+    "slider_horizontal_dark_runs": [
+      {
+        "y_start": 1219,
+        "y_end": 1221,
+        "runs": [
+          [
+            121,
+            498
+          ]
+        ]
+      },
+      {
+        "y_start": 1351,
+        "y_end": 1352,
+        "runs": [
+          [
+            122,
+            500
+          ]
+        ]
+      },
+      {
+        "y_start": 1476,
+        "y_end": 1478,
+        "runs": [
+          [
+            123,
+            501
+          ]
+        ]
+      },
+      {
+        "y_start": 1630,
+        "y_end": 1632,
+        "runs": [
+          [
+            123,
+            501
+          ]
+        ]
+      },
+      {
+        "y_start": 1767,
+        "y_end": 1769,
+        "runs": [
+          [
+            120,
+            498
+          ]
+        ]
+      },
+      {
+        "y_start": 1914,
+        "y_end": 1916,
+        "runs": [
+          [
+            117,
+            495
+          ]
+        ]
+      },
+      {
+        "y_start": 2056,
+        "y_end": 2058,
+        "runs": [
+          [
+            121,
+            499
+          ]
+        ]
+      }
+    ],
+    "known_rules": {
+      "top": [
+        115,
+        158,
+        1525,
+        164
+      ],
+      "basic_divider": [
+        121,
+        781,
+        880,
+        782
+      ],
+      "details_divider": [
+        121,
+        1097,
+        880,
+        1098
+      ],
+      "footer": [
+        123,
+        2139,
+        1512,
+        2146
+      ]
+    },
+    "barcode_note_bbox": [
+      1466,
+      141,
+      1513,
+      145
+    ],
+    "avatar_black_corner_bbox": [
+      1020,
+      416,
+      1414,
+      808
+    ],
+    "avatar_corner_bands": {
+      "top_left_horizontal": [
+        1020,
+        416,
+        1127,
+        429
+      ],
+      "bottom_right_horizontal": [
+        1300,
+        794,
+        1414,
+        808
+      ],
+      "projected_heavy_rows": [
+        [
+          416,
+          429
+        ],
+        [
+          794,
+          807
+        ]
+      ],
+      "projected_heavy_columns": [
+        [
+          1020,
+          1033
+        ],
+        [
+          1400,
+          1413
+        ]
+      ]
+    },
+    "slider_tracks": [
+      {
+        "left_x": 121,
+        "right_x": 498,
+        "y_top": 1219,
+        "y_bottom": 1221
+      },
+      {
+        "left_x": 122,
+        "right_x": 500,
+        "y_top": 1351,
+        "y_bottom": 1352
+      },
+      {
+        "left_x": 123,
+        "right_x": 501,
+        "y_top": 1476,
+        "y_bottom": 1478
+      },
+      {
+        "left_x": 123,
+        "right_x": 501,
+        "y_top": 1630,
+        "y_bottom": 1632
+      },
+      {
+        "left_x": 120,
+        "right_x": 498,
+        "y_top": 1767,
+        "y_bottom": 1769
+      },
+      {
+        "left_x": 117,
+        "right_x": 495,
+        "y_top": 1914,
+        "y_bottom": 1916
+      },
+      {
+        "left_x": 121,
+        "right_x": 499,
+        "y_top": 2056,
+        "y_bottom": 2058
+      }
+    ]
+  },
+  "method": {
+    "text_masks": "Pillow grayscale source masks thresholded at multiple levels; exact candidate raster masks aligned over +/-2 px; Dice overlap maximized. White-on-black headings inverted inside their ROI. Reported size is raster font size in source pixels, not CSS point size.",
+    "font_candidates": "Arial regular/bold/narrow, SimHei, Microsoft YaHei regular/bold, Noto Sans SC variable at weight 700/900.",
+    "caveat": "Weak fits are retained with their Dice score; scores below 0.65 are not treated as validated font identity."
+  }
+}

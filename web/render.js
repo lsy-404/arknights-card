@@ -111,6 +111,7 @@ export function barcodeValue(nickname) {
 }
 function drawNickname(ctx, profile) {
   const baseFontSize = 132;
+  const baseBold = !profile.nickname;
   const sourceRuns = profile.richText?.nickname?.length
     ? profile.richText.nickname
     : [{ text: profile.nickname || "此处填名字", color: profile.nickname ? undefined : "#999999" }];
@@ -118,12 +119,12 @@ function drawNickname(ctx, profile) {
   let width = 0;
   for (const run of runs) {
     const size = Number(run.size) || baseFontSize;
-    ctx.font = `${run.bold === false ? 400 : 700} ${size}px ${FONT}`;
+    ctx.font = `${(run.bold ?? baseBold) ? 700 : 400} ${size}px ${FONT}`;
     width += ctx.measureText(run.text).width;
   }
   const scale = width > LAYOUT.nickname.width ? LAYOUT.nickname.width / width : 1;
   const fittedRuns = runs.map((run) => run.size ? { ...run, size: Number(run.size) * scale } : run);
-  drawRichText(ctx, fittedRuns, { ...LAYOUT.nickname, fontSize: baseFontSize * scale, color: "#171918", fontFamily: FONT, bold: true, lineHeight: 1, singleLine: true });
+  drawRichText(ctx, fittedRuns, { ...LAYOUT.nickname, fontSize: baseFontSize * scale, color: "#171918", fontFamily: FONT, bold: baseBold, lineHeight: 1, singleLine: true });
 }
 
 function drawBarcode(ctx, nickname) {

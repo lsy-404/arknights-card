@@ -26,7 +26,7 @@ const server = http.createServer((request, response) => {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/web/index.html`);
     const result = await page.evaluate(async () => {
-      const { createRichText, setupRichTextToolbar } = await import('/web/rich-text.js');
+      const { createRichText } = await import('/web/rich-text.js');
       const css = document.createElement('link');
       css.rel = 'stylesheet';
       css.href = '/web/rich-text.css';
@@ -34,26 +34,33 @@ const server = http.createServer((request, response) => {
       await new Promise((resolve) => { css.onload = resolve; });
       await document.fonts.ready;
 
-      const toolbar = document.createElement('div');
-      toolbar.id = 'rich-text-test-toolbar';
+      const makeToolbar = (id) => {
+        const element = document.createElement('div');
+        element.id = id;
+        document.body.append(element);
+        return element;
+      };
+      const toolbar = makeToolbar('rich-text-test-toolbar');
+      const secondToolbar = makeToolbar('rich-text-test-toolbar-second');
+      const calibrationToolbar = makeToolbar('rich-text-test-toolbar-calibration');
+      const oversizedToolbar = makeToolbar('rich-text-test-toolbar-oversized');
       const firstNode = document.createElement('div');
       const secondNode = document.createElement('div');
-      document.body.append(toolbar, firstNode, secondNode);
-      setupRichTextToolbar(toolbar);
-      const first = await createRichText(firstNode, { initialText: 'alpha', maxLength: 20 });
-      const second = await createRichText(secondNode, { initialText: 'beta' });
+      document.body.append(firstNode, secondNode);
+      const first = await createRichText(firstNode, { initialText: 'alpha', maxLength: 20, toolbar });
+      const second = await createRichText(secondNode, { initialText: 'beta', toolbar: secondToolbar });
       const calibrationNode = document.createElement('div');
       calibrationNode.id = 'rich-text-calibration';
       calibrationNode.style.cssText = 'width:640px;height:240px;background:white';
       document.body.append(calibrationNode);
       const calibration = await createRichText(calibrationNode, {
-        initialText: 'Ag中\nNy華', defaultSize: 28, maxLength: 100,
+        initialText: 'Ag中\nNy華', defaultSize: 28, maxLength: 100, toolbar: calibrationToolbar,
       });
       const oversizedNode = document.createElement('div');
       oversizedNode.id = 'rich-text-oversized';
       oversizedNode.style.cssText = 'width:640px;height:64px;background:white';
       document.body.append(oversizedNode);
-      const oversized = await createRichText(oversizedNode, { initialText: 'Alpha', defaultSize: 28 });
+      const oversized = await createRichText(oversizedNode, { initialText: 'Alpha', defaultSize: 28, toolbar: oversizedToolbar });
       const sizeSelect = toolbar.querySelector('[aria-label="字号"]');
       const colorInput = toolbar.querySelector('[aria-label="文字颜色"]');
 
@@ -83,7 +90,7 @@ const server = http.createServer((request, response) => {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       };
 
-      window.richTextTest = { toolbar, firstNode, first, secondNode, second, calibrationNode, calibration, oversizedNode, oversized, selectText };
+      window.richTextTest = { toolbar, secondToolbar, calibrationToolbar, oversizedToolbar, firstNode, first, secondNode, second, calibrationNode, calibration, oversizedNode, oversized, selectText };
       sizeSelect.addEventListener('mousedown', (event) => { window.richTextTest.sizeMouseDownPrevented = event.defaultPrevented; });
       colorInput.addEventListener('mousedown', (event) => { window.richTextTest.colorMouseDownPrevented = event.defaultPrevented; });
       const pasted = document.createElement('div');
@@ -136,14 +143,14 @@ const server = http.createServer((request, response) => {
     result.crossFieldRuns = await page.evaluate(async () => {
       const refs = window.richTextTest;
       await refs.selectText(refs.secondNode.querySelector('.ql-editor'), 0, 2);
-      refs.toolbar.querySelector('[aria-label="下划线"]').click();
+      refs.secondToolbar.querySelector('[aria-label="下划线"]').click();
       return {
         runs: refs.second.getRuns(),
         toolbar: {
-          underline: refs.toolbar.querySelector('[aria-label="下划线"]').getAttribute('aria-pressed'),
-          size: refs.toolbar.querySelector('[aria-label="字号"]').value,
-          defaultSize: refs.toolbar.querySelector('[aria-label="字号"]').selectedOptions[0].textContent,
-          color: refs.toolbar.querySelector('[aria-label="文字颜色"]').value,
+          underline: refs.secondToolbar.querySelector('[aria-label="下划线"]').getAttribute('aria-pressed'),
+          size: refs.secondToolbar.querySelector('[aria-label="字号"]').value,
+          defaultSize: refs.secondToolbar.querySelector('[aria-label="字号"]').selectedOptions[0].textContent,
+          color: refs.secondToolbar.querySelector('[aria-label="文字颜色"]').value,
         },
       };
     });
@@ -152,7 +159,7 @@ const server = http.createServer((request, response) => {
       const refs = window.richTextTest;
       const { FONT } = await import('/web/typography.js');
       const editor = refs.calibrationNode.querySelector('.ql-editor');
-      const toolbarSize = window.richTextTest.toolbar.querySelector('[aria-label="字号"]');
+      const toolbarSize = window.richTextTest.calibrationToolbar.querySelector('[aria-label="字号"]');
       const styleSelection = async (start, end, size) => {
         await refs.selectText(editor, start, end);
         toolbarSize.value = `${size}px`;
@@ -174,8 +181,9 @@ const server = http.createServer((request, response) => {
         x: 0, y: 0, width: canvas.width, height: canvas.height, fontSize: 28, fontFamily: FONT,
       });
       await refs.selectText(refs.oversizedNode.querySelector('.ql-editor'), 0, 5);
-      toolbarSize.value = '200px';
-      toolbarSize.dispatchEvent(new Event('change', { bubbles: true }));
+      const oversizedSize = refs.oversizedToolbar.querySelector('[aria-label="字号"]');
+      oversizedSize.value = '200px';
+      oversizedSize.dispatchEvent(new Event('change', { bubbles: true }));
       await new Promise((resolve) => requestAnimationFrame(resolve));
       const oversizedRuns = refs.oversized.getRuns();
       const oversizedCanvas = document.createElement('canvas');

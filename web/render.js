@@ -68,7 +68,7 @@ export function drawProfile(canvas, profile, faction, operators = [], images = {
   line(735, 1184, 1115, 1184, "#777", 1.5);
   if (!editing) drawRichText(ctx, profile.richText?.oshi || [], { ...LAYOUT.oshi, fontSize: 24, color: "#171918", fontFamily: FONT });
 
-  SLIDERS.forEach((slider, i) => drawSlider(ctx, slider, i, profile.sliders?.[slider.key] ?? slider.value, (profile.sliderTouched || []).includes(slider.key)));
+  SLIDERS.forEach((slider, i) => drawSlider(ctx, slider, i, profile.sliders?.[slider.key] ?? slider.value));
   drawSliderPlaceholders(ctx);
 
   const ops = operators.slice(0, 8);
@@ -92,9 +92,10 @@ export function drawProfile(canvas, profile, faction, operators = [], images = {
     ctx.strokeRect(LAYOUT.signature.x, LAYOUT.signature.y - 32, LAYOUT.signature.width, LAYOUT.signature.height);
     ctx.fillStyle = "#c5c5c5";
     ctx.font = `400 20px ${FONT}`;
-    ctx.fillText("原作 Sayoko.　暝行镌无创建表单化", 132, 2200);
-    ctx.fillText("创建我自己的 → tiny.leisiyu.dev", 132, 2232);
-    ctx.fillText("游戏素材：鹰角网络 · PRTS", 132, 2264);
+    ctx.fillText("原作 Sayoko.　表单化 暝行镌无", 132, 2200);
+    ctx.fillText("tiny.leisiyu.dev", 202, 2248);
+    ctx.globalAlpha = 1;
+    drawSiteQr(ctx, "https://tiny.leisiyu.dev/", 132, 2210, 56);
     ctx.restore();
   }
   const measureContext = typeof document === "undefined" ? null : document.createElement("canvas").getContext("2d");
@@ -127,6 +128,16 @@ function drawNickname(ctx, profile) {
   drawRichText(ctx, fittedRuns, { ...LAYOUT.nickname, fontSize: baseFontSize * scale, color: "#171918", fontFamily: FONT, bold: baseBold, lineHeight: 1, singleLine: true });
 }
 
+function drawSiteQr(ctx, value, x, y, size) {
+  if (!globalThis.qrcode) return;
+  const code = globalThis.qrcode(0, "M");
+  code.addData(value);
+  code.make();
+  const count = code.getModuleCount();
+  const cell = size / count;
+  ctx.fillStyle = "#c4c4c4";
+  for (let row = 0; row < count; row++) for (let col = 0; col < count; col++) if (code.isDark(row, col)) ctx.fillRect(x + col * cell, y + row * cell, Math.ceil(cell), Math.ceil(cell));
+}
 function drawBarcode(ctx, nickname) {
   const y = LAYOUT.barcode.y, h = LAYOUT.barcode.height;
   const value = barcodeValue(nickname);
@@ -148,7 +159,7 @@ function drawQr(ctx, image, r, number, placeholder) { if (image) drawContain(ctx
 const TRACK_YS = [1220, 1352, 1477, 1631, 1768, 1915, 2057];
 const TRACK_XS = [121, 122, 123, 123, 120, 117, 121];
 const TRACK_X2S = [498, 500, 501, 501, 498, 495, 499];
-function drawSlider(ctx, item, i, value, touched) { const x = TRACK_XS[i], x2 = TRACK_X2S[i], width = x2 - x, trackY = TRACK_YS[i]; ctx.font = `400 33px ${FONT}`; ctx.fillStyle = "#171918"; ctx.fillText(item.title, x, trackY - 38); ctx.fillStyle = "#222"; ctx.fillRect(x, trackY - 1, x2 - x + 1, 3); ctx.fillRect(x - 1, trackY - 14, 3, 16); ctx.fillRect(x2 - 1, trackY - 14, 3, 16); if (i === 0) { for (const fraction of [1 / 3, 2 / 3]) ctx.fillRect(Math.round(x + width * fraction) - 1, trackY - 13, 3, 15); } else ctx.fillRect(Math.round((x + x2) / 2) - 1, trackY - 13, 3, 15); if (touched) { const ratio = Math.max(0, Math.min(100, Number(value))) / 100; ctx.fillStyle = "#61b9e6"; ctx.beginPath(); ctx.arc(x + width * ratio, trackY, 11, 0, Math.PI * 2); ctx.fill(); } ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "left"; ctx.fillText(item.left, x - 21, trackY + 42); ctx.textAlign = "right"; ctx.fillText(item.right, x2 + 20, trackY + 42); ctx.textAlign = "left"; }
+function drawSlider(ctx, item, i, value) { const x = TRACK_XS[i], x2 = TRACK_X2S[i], width = x2 - x, trackY = TRACK_YS[i]; ctx.font = `400 33px ${FONT}`; ctx.fillStyle = "#171918"; ctx.fillText(item.title, x, trackY - 38); ctx.fillStyle = "#222"; ctx.fillRect(x, trackY - 1, x2 - x + 1, 3); ctx.fillRect(x - 1, trackY - 14, 3, 16); ctx.fillRect(x2 - 1, trackY - 14, 3, 16); if (i === 0) { for (const fraction of [1 / 3, 2 / 3]) ctx.fillRect(Math.round(x + width * fraction) - 1, trackY - 13, 3, 15); } else ctx.fillRect(Math.round((x + x2) / 2) - 1, trackY - 13, 3, 15); { const ratio = Math.max(0, Math.min(100, Number(value))) / 100; ctx.fillStyle = "#61b9e6"; ctx.beginPath(); ctx.arc(x + width * ratio, trackY, 11, 0, Math.PI * 2); ctx.fill(); } ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "left"; ctx.fillText(item.left, x - 21, trackY + 42); ctx.textAlign = "right"; ctx.fillText(item.right, x2 + 20, trackY + 42); ctx.textAlign = "left"; }
 function drawSliderPlaceholders(ctx) { SLIDERS.forEach((item, i) => { ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "center"; if (i === 0) { ctx.fillText("微氪", TRACK_XS[i] + (TRACK_X2S[i] - TRACK_XS[i]) / 3, TRACK_YS[i] + 42); ctx.fillText("中氪", TRACK_XS[i] + 2 * (TRACK_X2S[i] - TRACK_XS[i]) / 3, TRACK_YS[i] + 42); } else if (item.mid) ctx.fillText(item.mid, (TRACK_XS[i] + TRACK_X2S[i]) / 2, TRACK_YS[i] + 42); ctx.textAlign = "left"; }); }
 function drawOptions(ctx, profile) {
   const groups = { gender: OPTIONS.gender, contact: OPTIONS.contact, server: OPTIONS.server, seniority: OPTIONS.seniority, focus: OPTIONS.focus };

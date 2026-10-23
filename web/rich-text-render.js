@@ -6,6 +6,23 @@ function makeFont(run, options) {
   return { size, bold, font: `${bold ? '700 ' : ''}${size}px ${options.fontFamily}` };
 }
 
+const imageCache = new Map();
+let imageLoadHandler = () => {};
+
+export function onRichTextImageLoad(handler) { imageLoadHandler = handler; }
+
+function loadImage(source) {
+  if (typeof Image === 'undefined') return null;
+  let image = imageCache.get(source);
+  if (!image) {
+    image = new Image();
+    image.onload = () => imageLoadHandler();
+    image.src = source;
+    imageCache.set(source, image);
+  }
+  return image;
+}
+
 function measureLineMetrics(ctx, style, lineHeight) {
   ctx.font = style.font;
   const metrics = ctx.measureText('Mg国');
@@ -28,6 +45,17 @@ function collectLines(ctx, runs, options) {
     const text = String(run.text ?? '');
     const style = makeFont(run, options);
     const metrics = measureLineMetrics(ctx, style, options.lineHeight);
+    if (run.image) {
+      const image = loadImage(run.image);
+      const ready = image?.complete && image.naturalWidth;
+      const width = style.size * (ready ? image.naturalWidth / image.naturalHeight : 1);
+      if (!options.singleLine && line.width > 0 && line.width + width > options.width) finish();
+      line.parts.push({ text: '', image: ready ? image : null, run, ...style, ...metrics, width });
+      line.width += width;
+      line.ascent = Math.max(line.ascent, metrics.ascent);
+      line.descent = Math.max(line.descent, metrics.descent);
+      continue;
+    }
     let token = '';
     const pushPart = (partText, partWidth) => {
       line.parts.push({ text: partText, run, ...style, ...metrics, width: partWidth });
@@ -98,6 +126,11 @@ export function drawRichText(ctx, runs, {
       const baseline = drawY + line.ascent;
       let drawX = x;
       for (const part of line.parts) {
+        if (part.run.image) {
+          if (part.image) ctx.drawImage(part.image, drawX, baseline - part.size * 0.85, part.width, part.size);
+          drawX += part.width;
+          continue;
+        }
         ctx.font = part.font;
         ctx.fillStyle = part.run.color || color;
         ctx.fillText(part.text, drawX, baseline);

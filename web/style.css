@@ -78,17 +78,7 @@ button { color: inherit; }
 .page-intro h1 { margin: 0; font-size: clamp(25px, 2.5vw, 34px); line-height: 1.2; letter-spacing: -.025em; }
 .intro-copy { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
 
-.toolbar {
-  position: sticky;
-  top: 8px;
-  z-index: 5;
-  margin: 0 0 12px;
-  padding: 6px 8px;
-  border: 1px solid var(--line);
-  background: #fff;
-  box-shadow: 0 2px 8px #2023200d;
-}
-
+.field-toolbar { padding: 5px 6px; border: 1px solid var(--rule); border-bottom: 0; background: #fafbf9; }
 #profile-form { display: grid; gap: 12px; }
 .form-section {
   min-width: 0;
@@ -142,7 +132,7 @@ button { color: inherit; }
   font-weight: 400;
 }
 .rich-field.nickname { height: 58px; }
-.rich-field.motto { height: 54px; }
+.rich-field.motto { height: 72px; }
 .rich-field.quote { height: 64px; }
 .rich-field.oshi { height: 47px; }
 .rich-field.extra { height: 82px; }

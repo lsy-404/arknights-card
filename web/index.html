@@ -28,58 +28,21 @@
 
         <form id="profile-form">
           <section class="form-section" aria-labelledby="identity-title">
-            <div class="section-heading"><span>01</span><h2 id="identity-title">基础信息</h2></div>
-            <label class="field rich-field-label">卡片昵称
+            <div class="section-heading"><span>01</span><h2 id="identity-title">页眉标题</h2><small>Doctor</small></div>
+            <label class="field rich-field-label"><span class="label-text">卡片昵称</span>
               <div id="field-nickname" class="rich-field nickname" aria-label="昵称"></div>
             </label>
-            <div class="field-grid">
-              <fieldset id="choice-gender" class="field choice-field"><legend>性别</legend></fieldset>
-              <fieldset id="choice-server" class="field choice-field span-2"><legend>所在区服</legend></fieldset>
-              <fieldset id="choice-seniority" class="field choice-field span-2"><legend>罗德岛资历</legend></fieldset>
-            </div>
-          </section>
-
-          <section class="form-section" aria-labelledby="contact-title">
-            <div class="section-heading"><span>02</span><h2 id="contact-title">交流偏好</h2></div>
-            <fieldset id="choice-contact" class="field choice-field"><legend>想扩列</legend></fieldset>
-            <fieldset id="choice-focus" class="field choice-field"><legend>更侧重</legend></fieldset>
-            <label class="field rich-field-label">我推的角色 / CP / CB
-              <div id="field-oshi" class="rich-field oshi" aria-label="我推的角色"></div>
-            </label>
-          </section>
-
-          <section class="form-section" aria-labelledby="faction-title">
-            <div class="section-heading"><span>03</span><h2 id="faction-title">所属阵营</h2></div>
-            <label class="field">选择阵营
-              <select id="faction-select" aria-label="所属阵营"></select>
-            </label>
-            <label class="field rich-field-label">阵营格言
-              <div id="field-motto" class="rich-field motto" aria-label="阵营格言"></div>
-            </label>
-            <div class="field rich-field-label quote-field">
-              <label for="quote-default">阵营默认语录</label>
-              <div class="quote-tools">
-                <input id="quote-default" type="text" readonly aria-label="阵营默认语录" />
-                <button id="restore-quote" type="button" class="quiet-button">恢复默认</button>
-              </div>
-              <div id="field-quote" class="rich-field quote" aria-label="阵营语录"></div>
-            </div>
-          </section>
-
-          <section class="form-section" aria-labelledby="preferences-title">
-            <div class="section-heading"><span>04</span><h2 id="preferences-title">偏好参数</h2></div>
-            <div id="slider-layer" class="slider-list" aria-label="偏好滑块"></div>
           </section>
 
           <section class="form-section" aria-labelledby="materials-title">
-            <div class="section-heading"><span>05</span><h2 id="materials-title">个人素材</h2></div>
+            <div class="section-heading"><span>02</span><h2 id="materials-title">头像与二维码</h2><small>Portrait / QR</small></div>
             <div class="upload-row">
-              <label for="avatar-file">头像</label>
+              <label for="avatar-file" class="label-text">头像</label>
               <input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
               <button id="remove-avatar" type="button" class="quiet-button">移除头像</button>
             </div>
             <div class="field qr-count-field">
-              <label for="qr-count">二维码数量</label>
+              <label for="qr-count" class="label-text">二维码数量</label>
               <select id="qr-count"><option value="1">1 个</option><option value="2" selected>2 个</option></select>
             </div>
             <div class="qr-grid">
@@ -100,26 +63,64 @@
             </div>
           </section>
 
+          <section class="form-section" aria-labelledby="faction-title">
+            <div class="section-heading"><span>03</span><h2 id="faction-title">所属阵营</h2><small>Faction</small></div>
+            <label class="field"><span class="label-text">选择阵营</span>
+              <select id="faction-select" aria-label="所属阵营"></select>
+            </label>
+            <label class="field rich-field-label"><span class="label-text">阵营格言</span>
+              <div id="field-motto" class="rich-field motto" aria-label="阵营格言"></div>
+            </label>
+          </section>
+
+          <section class="form-section" aria-labelledby="basics-title">
+            <div class="section-heading"><span>04</span><h2 id="basics-title">基础信息</h2><small>Basics</small></div>
+            <fieldset id="choice-gender" class="field choice-field"><legend>性别</legend></fieldset>
+            <fieldset id="choice-contact" class="field choice-field"><legend>想扩列</legend></fieldset>
+            <fieldset id="choice-server" class="field choice-field"><legend>所在区服</legend></fieldset>
+            <fieldset id="choice-seniority" class="field choice-field"><legend>罗德岛资历</legend></fieldset>
+            <fieldset id="choice-focus" class="field choice-field"><legend>更侧重</legend></fieldset>
+          </section>
+
           <section class="form-section" aria-labelledby="operators-title">
-            <div class="section-heading"><span>06</span><h2 id="operators-title">代表干员</h2></div>
+            <div class="section-heading"><span>05</span><h2 id="operators-title">代表干员</h2><small>Operators</small></div>
             <div class="operator-block">
               <button id="operator-open" type="button" class="quiet-button">选择干员</button>
               <div id="selected-operators" class="selected-operators" aria-live="polite"></div>
             </div>
           </section>
 
+          <section class="form-section" aria-labelledby="preferences-title">
+            <div class="section-heading"><span>06</span><h2 id="preferences-title">详细资料</h2><small>About me</small></div>
+            <div id="slider-layer" class="slider-list" aria-label="偏好滑块"></div>
+            <label class="field rich-field-label"><span class="label-text">我推的角色 / CP / CB</span>
+              <div id="field-oshi" class="rich-field oshi" aria-label="我推的角色"></div>
+            </label>
+          </section>
+
           <section class="form-section" aria-labelledby="extra-title">
-            <div class="section-heading"><span>07</span><h2 id="extra-title">补充说明</h2></div>
-            <label class="field rich-field-label">想对新朋友说
+            <div class="section-heading"><span>07</span><h2 id="extra-title">补充说明</h2><small>Note</small></div>
+            <label class="field rich-field-label"><span class="label-text">想对新朋友说</span>
               <div id="field-extra" class="rich-field extra" aria-label="补充说明"></div>
             </label>
           </section>
 
-          <section class="form-section output-settings" aria-label="导出设置">
-            <label class="attribution-toggle"><input id="show-attribution" type="checkbox" checked />显示生成信息</label>
-            <label class="field">导出清晰度
-              <select id="export-scale"><option value="1">标准 · 1×</option><option value="2" selected>高清 · 2×</option><option value="3">超清 · 3×</option></select>
-            </label>
+          <section class="form-section" aria-labelledby="footer-title">
+            <div class="section-heading"><span>08</span><h2 id="footer-title">页脚与导出</h2><small>Footer</small></div>
+            <div class="field rich-field-label quote-field">
+              <label for="quote-default" class="label-text">阵营默认语录</label>
+              <div class="quote-tools">
+                <input id="quote-default" type="text" readonly aria-label="阵营默认语录" />
+                <button id="restore-quote" type="button" class="quiet-button">恢复默认</button>
+              </div>
+              <div id="field-quote" class="rich-field quote" aria-label="阵营语录"></div>
+            </div>
+            <div class="output-settings">
+              <label class="attribution-toggle"><input id="show-attribution" type="checkbox" checked />显示生成信息</label>
+              <label class="field"><span class="label-text">导出清晰度</span>
+                <select id="export-scale"><option value="1">标准 · 1×</option><option value="2" selected>高清 · 2×</option><option value="3">超清 · 3×</option></select>
+              </label>
+            </div>
           </section>
         </form>
       </section>

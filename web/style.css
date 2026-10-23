@@ -94,26 +94,19 @@ button { color: inherit; }
   min-width: 0;
   display: grid;
   gap: 16px;
-  padding: 18px 20px 20px;
-  border: 1px solid var(--line);
-  border-top: 2px solid var(--ink);
+  --pad: 18px;
+  padding: 0 var(--pad) var(--pad);
+  border: 1px solid var(--ink);
   background: var(--paper);
 }
 
-.section-heading { display: flex; align-items: center; gap: 10px; margin: 0; }
-.section-heading > span {
-  min-width: 24px;
-  padding: 2px 5px;
-  background: var(--ink);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-align: center;
-}
-.section-heading h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.section-heading { display: flex; align-items: center; gap: 10px; margin: 0 calc(var(--pad) * -1); padding: 9px var(--pad); background: var(--ink); color: #fff; }
+.section-heading > span { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.section-heading h2 { margin: 0; font-size: 15px; font-weight: 700; }
+.section-heading small { margin-left: auto; color: #aeb5af; font-size: 10px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
 .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .field { min-width: 0; display: flex; flex-direction: column; gap: 8px; margin: 0; color: var(--ink); font-size: 12px; font-weight: 650; }
+.label-text, .choice-field legend { display: block; width: 100%; margin: 0; padding: 4px 0 4px 9px; border-left: 3px solid var(--accent); background: #f3f4f1; color: var(--ink); font-size: 12px; font-weight: 650; }
 .field select,
 .field input:not([type="checkbox"]):not([type="file"]),
 .field textarea,
@@ -170,7 +163,6 @@ button { color: inherit; }
 .quiet-button:hover { border-color: var(--ink); }
 
 .choice-field { display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; padding: 0; border: 0; }
-.choice-field legend { width: 100%; margin: 0 0 8px; padding: 0; color: var(--ink); font-size: 12px; font-weight: 650; }
 .choice-field button[data-group] {
   position: relative !important;
   inset: auto !important;
@@ -228,6 +220,7 @@ button { color: inherit; }
 .slider-list output { color: var(--muted); text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; padding-top: 1px; }
 
 .upload-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 12px; font-weight: 650; }
+.upload-row > .label-text { width: auto; }
 .upload-row input[type="file"] { flex: 1 1 200px; min-width: 0; color: var(--muted); font-size: 11px; }
 .qr-count-field { max-width: 240px; }
 .qr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -280,7 +273,7 @@ button { color: inherit; }
 
 @media (max-width: 900px) {
   .workspace { grid-template-columns: minmax(0, 1fr) minmax(320px, .86fr); gap: 18px; padding-inline: 16px; }
-  .form-section { padding: 14px; }
+  .form-section { --pad: 14px; }
   .qr-grid { grid-template-columns: 1fr; }
 }
 
@@ -293,9 +286,8 @@ button { color: inherit; }
   .preview-stage { padding: 8px; }
   .page-intro { padding-bottom: 12px; }
   .field-grid { gap: 10px; }
-  .form-section { padding: 13px 12px 15px; }
-  .section-heading { margin-bottom: 12px; }
-  .slider-list > label, .slider-list > .slider-row { grid-template-columns: minmax(84px, .8fr) minmax(80px, 1fr) minmax(68px, .8fr); gap: 7px; }
+  .form-section { --pad: 12px; }
+    .slider-list > label, .slider-list > .slider-row { grid-template-columns: minmax(84px, .8fr) minmax(80px, 1fr) minmax(68px, .8fr); gap: 7px; }
   .output-settings { grid-template-columns: 1fr 1fr; }
 }
 

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f4f1">
+  <title>博士扩列档案 · 明日方舟同人</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./qr.css">
+</head>
+<body>
+  <header class="topbar"><a class="wordmark" href="#top"><span class="mark">RI</span><span>RHODES ISLAND <small>PERSONAL PROFILE SYSTEM</small></span></a><span class="local-note"><i></i> 本地生成 · 不上传</span></header>
+  <main id="top" class="workspace">
+    <section class="editor-panel" aria-labelledby="editor-title">
+      <div class="page-intro"><div><p class="eyebrow">DOCTOR NETWORKING PROFILE / 01</p><h1 id="editor-title">博士扩列档案</h1><p class="intro-copy">写下你的罗德岛日常，生成一张属于自己的扩列卡。</p></div><span class="issue">档案录入<br><b>PROFILE</b></span></div>
+      <form id="profile-form">
+        <section class="form-section"><div class="section-heading"><span>01</span><h2>基础信息</h2></div>
+          <div class="field-grid">
+            <label class="field span-2">昵称<input name="nickname" maxlength="24" placeholder="博士，此处填写名字" value="博士"></label>
+            <label class="field">性别<select name="gender"><option>女</option><option>男</option><option>其他</option><option>不公开</option></select></label>
+            <label class="field">所在区服<select name="server"><option>官服</option><option>B服</option><option>繁中服</option><option>日服</option><option>韩服</option><option>国际服</option></select></label>
+            <fieldset class="field choice-field span-2"><legend>想扩列</legend><label><input type="checkbox" name="contact" value="微信"> 微信</label><label><input type="checkbox" name="contact" value="QQ"> QQ</label><label><input type="checkbox" name="contact" value="游戏好友" checked> 游戏好友</label></fieldset>
+            <label class="field">罗德岛资历<select name="seniority"><option>新晋博士</option><option>初级资历</option><option selected>资深博士</option><option>究极老资历</option></select></label>
+            <label class="field">游戏 UID<input name="uid" inputmode="numeric" maxlength="18" placeholder="可留空"></label>
+            <fieldset class="field choice-field span-2"><legend>更侧重</legend><label><input type="checkbox" name="focus" value="游戏本身" checked> 游戏本身</label><label><input type="checkbox" name="focus" value="角色厨"> 角色厨</label><label><input type="checkbox" name="focus" value="同人"> 同人</label><label><input type="checkbox" name="focus" value="OC"> OC</label><label><input type="checkbox" name="focus" value="梦女"> 梦女</label><label><input type="checkbox" name="focus" value="其他"> 其他</label></fieldset>
+            <label class="field span-2">自我介绍<textarea name="bio" rows="3" maxlength="180" placeholder="喜欢的干员、作息、聊天偏好……"></textarea><span class="hint">最多 180 字</span></label>
+          </div>
+        </section>
+        <section class="form-section"><div class="section-heading"><span>02</span><h2>我的罗德岛</h2></div>
+          <label class="field">所属阵营<select id="faction-select" name="faction"></select></label>
+          <div id="faction-shortcuts" class="faction-shortcuts" aria-label="阵营快捷切换"></div>
+          <div class="faction-quote"><div class="quote-label"><span>档案语录</span><button id="default-quote" type="button" class="text-button">使用阵营默认语录</button><span id="quote-state" class="quote-state">阵营语录</span></div><textarea id="quote-input" name="quote" rows="2" maxlength="130" aria-label="自定义档案语录"></textarea></div>
+          <label class="field">我推的角色 / CP / CB<input name="oshi" maxlength="90" placeholder="例如：阿米娅、能天使 / 能德"></label>
+          <div class="operator-block"><div class="operator-title"><span>选择代表干员</span><small>可选最多 8 位</small></div><div id="operator-picker" class="operator-picker"></div><div id="selected-operators" class="selected-operators" aria-live="polite"></div></div>
+        </section>
+        <section class="form-section"><div class="section-heading"><span>03</span><h2>偏好参数</h2></div><p class="section-description">拖动滑块，在档案预览中即时查看你的取向。</p><div id="sliders" class="slider-list"></div></section>
+        <section class="form-section"><div class="section-heading"><span>04</span><h2>个人素材</h2></div>
+          <div class="upload-row"><div><b>博士头像</b><small>仅在此设备预览与导出</small></div><label class="upload-button">选择图片<input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><button class="quiet-button" type="button" id="remove-avatar">移除</button></div>
+          <div class="qr-grid"><div class="qr-slot" data-qr-slot="wechat"><div class="qr-title"><b>微信二维码</b><button type="button" class="clear-qr">清除</button></div><div class="drop-zone" tabindex="0" role="button" aria-label="添加微信二维码"><span class="drop-icon">＋</span><span>拖放、粘贴或选择图片</span><input class="qr-file" type="file" accept="image/png,image/jpeg,image/webp"></div><button type="button" class="upload-link">选择二维码图片</button><button type="button" class="crop-link" hidden>手动裁切 / 调整</button><p class="qr-status" aria-live="polite"></p></div>
+            <div class="qr-slot" data-qr-slot="qq"><div class="qr-title"><b>QQ 二维码</b><button type="button" class="clear-qr">清除</button></div><div class="drop-zone" tabindex="0" role="button" aria-label="添加 QQ 二维码"><span class="drop-icon">＋</span><span>拖放、粘贴或选择图片</span><input class="qr-file" type="file" accept="image/png,image/jpeg,image/webp"></div><button type="button" class="upload-link">选择二维码图片</button><button type="button" class="crop-link" hidden>手动裁切 / 调整</button><p class="qr-status" aria-live="polite"></p></div></div>
+        </section>
+        <section class="form-section"><div class="section-heading"><span>05</span><h2>补充说明</h2></div><label class="field">想对新朋友说<textarea name="extra" rows="3" maxlength="160" placeholder="也可以写上雷点、常玩活动或其他想补充的内容"></textarea></label></section>
+        <div class="export-controls"><label class="field">导出清晰度<select id="export-scale"><option value="1">标准 · 1×</option><option value="2" selected>高清 · 2×</option><option value="3">超清 · 3×</option></select></label><button id="export-button" class="primary-button" type="button">导出 PNG 档案 <span>↗</span></button><p id="export-status" class="export-status" aria-live="polite"></p></div>
+      </form>
+      <footer class="editor-footer"><span>图片只在你的浏览器内处理，不会上传。页面不保存档案数据。</span><a id="home-link" hidden>返回主页 ↗</a></footer>
+    </section>
+    <aside class="preview-panel"><div class="preview-head"><div><span class="eyebrow">LIVE PREVIEW</span><h2>档案预览</h2></div><span class="live-dot">实时更新</span></div><div class="preview-stage"><canvas id="profile-canvas" width="900" height="1280" aria-label="博士扩列档案预览"></canvas></div><p class="preview-tip">预览为竖幅 PNG · 可选择 1×、2× 或 3× 导出</p><div class="credits"><span>原作署名</span><a href="https://www.xiaohongshu.com/user/profile/647e0cd800000000250355fe" target="_blank" rel="noreferrer">Sayoko. ↗</a><small>素材：鹰角网络 / PRTS</small><small>非官方、非商业同人作品</small><a href="https://github.com/lsy-404/arknights-card" target="_blank" rel="noreferrer">查看项目源码 ↗</a></div></aside>
+  </main><script type="module" src="./app.js"></script>
+</body>
+</html>

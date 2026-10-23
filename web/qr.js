@@ -10,9 +10,9 @@ function loadDecoder() {
       script.onload = () =>
         globalThis.jsQR
           ? resolve(globalThis.jsQR)
-          : reject(new Error("QR decoder did not initialize"));
+          : reject(new Error("二维码识别暂不可用"));
       script.onerror = () =>
-        reject(new Error("QR decoder could not be loaded"));
+        reject(new Error("二维码识别暂不可用"));
       document.head.append(script);
     });
   }
@@ -22,6 +22,20 @@ function loadDecoder() {
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_SIDE = 8192;
 const MAX_PIXELS = 40_000_000;
+const USER_ERRORS = new Set([
+  "请选择图片文件",
+  "图片文件过大，请选择 20 MB 以内的图片",
+  "图片内容无效",
+  "图片尺寸过大，请先缩小后再导入",
+  "无法读取这张图片",
+  "二维码识别暂不可用",
+]);
+
+function userMessage(error, fallback) {
+  return error instanceof Error && USER_ERRORS.has(error.message)
+    ? error.message
+    : fallback;
+}
 
 function loadImage(file) {
   return new Promise((resolve, reject) => {
@@ -138,10 +152,7 @@ export async function detectAndCrop(file) {
     return {
       canvas: original,
       detected: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "图片处理失败，可尝试手动裁切。",
+      message: userMessage(error, "二维码识别失败，可手动裁切。"),
     };
   }
 }
@@ -157,7 +168,7 @@ export async function openCropEditor(file, onConfirm) {
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "图片处理失败",
+      message: userMessage(error, "无法打开裁切工具，请重试。"),
     };
   }
   const dialog = document.createElement("dialog");
@@ -352,7 +363,7 @@ export async function openCropEditor(file, onConfirm) {
       } catch (error) {
         finish({
           ok: false,
-          message: error instanceof Error ? error.message : "提交裁切结果失败",
+          message: "无法应用裁切结果，请重试。",
         });
       }
     });

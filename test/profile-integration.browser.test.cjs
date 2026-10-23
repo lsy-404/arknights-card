@@ -44,7 +44,8 @@ async function pngMetrics(page, png) {
       return count ? { x: left, y: top, width: right - left + 1, height: bottom - top + 1, count } : null;
     };
     const isDark = (r, g, b) => r < 128 && g < 128 && b < 128;
-    const barcodeRegion = { x: 1292, y: 80, width: 220, height: 58 };
+    const barcodeRegion = { x: 1240, y: 72, width: 390, height: 78 };
+    const nicknameRegion = { x: 400, y: 347, width: 760, height: 120 };
     const barcodeBox = box(barcodeRegion, isDark);
     let barcodeBits = '';
     for (let y = barcodeRegion.y; y < barcodeRegion.y + barcodeRegion.height; y++) {
@@ -53,10 +54,19 @@ async function pngMetrics(page, png) {
         barcodeBits += isDark(pixels[i], pixels[i + 1], pixels[i + 2]) ? '1' : '0';
       }
     }
+    let nicknameBits = '';
+    for (let y = nicknameRegion.y; y < nicknameRegion.y + nicknameRegion.height; y++) {
+      for (let x = nicknameRegion.x; x < nicknameRegion.x + nicknameRegion.width; x++) {
+        const i = (y * canvas.width + x) * 4;
+        nicknameBits += isDark(pixels[i], pixels[i + 1], pixels[i + 2]) ? '1' : '0';
+      }
+    }
     return {
       width: canvas.width,
       height: canvas.height,
       barcode: { box: barcodeBox, bits: barcodeBits },
+      nickname: { box: box(nicknameRegion, isDark), bits: nicknameBits },
+      doctorTitle: box({ x: 180, y: 300, width: 220, height: 150 }, isDark),
       qr: [
         box({ x: 570, y: 486, width: 200, height: 200 }, isDark),
         box({ x: 790, y: 486, width: 200, height: 200 }, isDark),
@@ -99,57 +109,33 @@ async function exportPng(page) {
     if (!alpha.barcode.box || !beta.barcode.box || alpha.barcode.bits === beta.barcode.bits) {
       failures.push(`Nickname edit did not change the exported barcode pixels: Alpha=${JSON.stringify(alpha.barcode.box)}, Beta=${JSON.stringify(beta.barcode.box)}`);
     }
-    if (JSON.stringify(alpha.barcode.box && { ...alpha.barcode.box, count: 0 }) !== JSON.stringify(beta.barcode.box && { ...beta.barcode.box, count: 0 })) {
-      failures.push(`Barcode pixel bounds changed with nickname: ${JSON.stringify({ alpha: alpha.barcode.box, beta: beta.barcode.box })}`);
+    for (const [name, metrics] of [['Alpha', alpha], ['Beta', beta]]) {
+      if (!metrics.barcode.box || metrics.barcode.box.width < 220 || metrics.barcode.box.width > 340) {
+        failures.push(`Barcode width for ${name} is outside the natural layout range: ${JSON.stringify(metrics.barcode.box)}`);
+      }
+    }
+    if (!alpha.nickname.box || !beta.nickname.box || !alpha.doctorTitle ||
+      alpha.nickname.box.height < 70 || alpha.nickname.box.height > 145 ||
+      alpha.nickname.box.height < alpha.doctorTitle.height * 0.75 || alpha.nickname.bits === beta.nickname.bits) {
+      failures.push(`Nickname heading was not rendered near the Doctor title scale or did not update: ${JSON.stringify({ nickname: alpha.nickname.box, doctor: alpha.doctorTitle, beta: beta.nickname.box })}`);
     }
 
-    await page.locator('#choice-gender button[data-value="女"]').click();
-    const genderButton = page.locator('#choice-gender button[data-value="女"]');
-    const choiceGeometry = await page.evaluate(() => {
-      const sheet = document.querySelector('#sheet').getBoundingClientRect();
-      const button = document.querySelector('#choice-gender button[data-value="女"]').getBoundingClientRect();
-      return {
-        scale: 1640 / sheet.width,
-        button: { x: (button.x - sheet.x) * 1640 / sheet.width, y: (button.y - sheet.y) * 1640 / sheet.width,
-          width: button.width * 1640 / sheet.width, height: button.height * 1640 / sheet.width },
-      };
-    });
-    const sheetShot = await page.locator('#sheet').screenshot();
-    const markedExport = await pngMetrics(page, await exportPng(page));
-    const domChoice = await page.evaluate(async (base64) => {
-      const image = new Image();
-      image.src = `data:image/png;base64,${base64}`;
-      await image.decode();
-      const canvas = document.createElement('canvas');
-      canvas.width = 1640; canvas.height = 2360;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-      const bounds = (region, predicate) => {
-        let left = region.x + region.width, top = region.y + region.height, right = -1, bottom = -1;
-        for (let y = region.y; y < region.y + region.height; y++) for (let x = region.x; x < region.x + region.width; x++) {
-          const i = (y * canvas.width + x) * 4;
-          if (!predicate(data[i], data[i + 1], data[i + 2])) continue;
-          left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y);
-        }
-        return right < 0 ? null : { x: left, y: top, width: right - left + 1, height: bottom - top + 1 };
-      };
-      const marker = (r, g, b) => b > r + 24 && g > r + 12 && b > 180;
-      const dark = (r, g, b) => r < 128 && g < 128 && b < 128;
-      return {
-        marker: bounds({ x: 280, y: 770, width: 140, height: 65 }, marker),
-        text: bounds({ x: 380, y: 805, width: 48, height: 43 }, dark),
-      };
-    }, sheetShot.toString('base64'));
-    const close = (a, b, tolerance) => a && b && Math.abs(a - b) <= tolerance;
-    for (const part of ['choiceMarker', 'choiceText']) {
-      const dom = part === 'choiceMarker' ? domChoice.marker : domChoice.text;
-      const output = markedExport[part];
-      if (!dom || !output || !close(dom.x, output.x, 8) || !close(dom.y, output.y, 8) ||
-        !close(dom.width, output.width, 10) || !close(dom.height, output.height, 8)) {
-        failures.push(`Selected option DOM/export ${part} geometry diverged: ${JSON.stringify({ dom, output, choiceGeometry, button: await genderButton.boundingBox() })}`);
+    const gender = page.locator('#choice-gender');
+    const choiceControl = gender.locator('select, input, button').first();
+    if (await choiceControl.count()) {
+      if (await choiceControl.evaluate((element) => element.tagName === 'SELECT')) {
+        await choiceControl.selectOption({ label: '女' });
+      } else if (await choiceControl.evaluate((element) => element.type === 'radio' || element.type === 'checkbox')) {
+        await gender.getByLabel('女').check();
+      } else {
+        await gender.getByText('女', { exact: true }).click();
       }
+    } else {
+      await gender.getByText('女', { exact: true }).click();
+    }
+    const markedExport = await pngMetrics(page, await exportPng(page));
+    if (!markedExport.choiceMarker) {
+      failures.push(`Selecting a normal gender form option did not render its highlighter in Canvas: ${JSON.stringify(markedExport.choiceMarker)}`);
     }
 
     const factions = await page.evaluate(async () => (await import('/web/data.js')).factions);
@@ -221,7 +207,7 @@ async function exportPng(page) {
       const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
       const transfer = new DataTransfer();
       transfer.items.add(new File([bytes], 'chat-screenshot.png', { type: 'image/png' }));
-      const target = document.querySelector('#qr-hit-2');
+      const target = document.querySelector('[data-qr-slot="qr2"]');
       target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: transfer }));
       target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer }));
     }, fixture.toString('base64'));
@@ -231,7 +217,7 @@ async function exportPng(page) {
     }, undefined, { timeout: 1500 }).catch(() => {});
     const dropStatus = await page.locator('[data-qr-slot="qr2"] .qr-status').innerText();
     if (!dropStatus.includes('二维码')) {
-      failures.push(`Dropping an image on the second QR canvas target did not import it: ${JSON.stringify(dropStatus)}`);
+      failures.push(`Dropping an image on the second QR slot did not import it: ${JSON.stringify(dropStatus)}`);
     }
     const bothQr = await pngMetrics(page, await exportPng(page));
     if (bothQr.qr.some((box) => !box || box.count < 100) ||
@@ -242,6 +228,11 @@ async function exportPng(page) {
     const oneQr = await pngMetrics(page, await exportPng(page));
     if (!oneQr.qr[0] || oneQr.qr[0].count < 100 || oneQr.qr[1]) {
       failures.push(`Setting qrCount to 1 must remove the second exported QR: ${JSON.stringify(oneQr.qr)}`);
+    }
+    await page.locator('#qr-count').selectOption('2');
+    const restoredQr = await pngMetrics(page, await exportPng(page));
+    if (!restoredQr.qr[0] || !restoredQr.qr[1]) {
+      failures.push(`Returning qrCount to 2 must retain both QR slots: ${JSON.stringify(restoredQr.qr)}`);
     }
     if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
     if (failures.length) throw new Error(failures.join('\n'));

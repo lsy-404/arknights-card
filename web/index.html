@@ -12,8 +12,8 @@
   </head>
   <body>
     <header class="topbar">
-      <a class="wordmark" href="#top"><span class="mark">RI</span><span>博士扩列档案<small>LOCAL PROFILE EDITOR</small></span></a>
-      <a id="home-link" href="https://tiny.leisiyu.dev/">返回 Tiny Projects ↗</a>
+      <a class="wordmark" href="#top"><span class="mark">RI</span><span>博士扩列档案</span></a>
+      <a id="home-link" href="https://tiny.leisiyu.dev/" hidden>返回 Tiny Projects ↗</a>
     </header>
     <main id="top">
       <section class="controls" aria-label="档案编辑工具">
@@ -36,8 +36,9 @@
         </div>
       </section>
       <section class="sheet-scroll" aria-label="原尺寸档案画布">
+        <p class="sheet-help">直接点卡片文字填写，点选高亮，拖动刻度</p>
         <div id="sheet" class="sheet">
-          <canvas id="profile-canvas" width="1640" height="2360" aria-label="博士扩列档案实时预览"></canvas>
+          <canvas id="profile-canvas" width="1640" height="2360" aria-label="博士扩列档案卡"></canvas>
           <div id="sheet-editors" class="sheet-editors">
             <div id="field-nickname" class="rich-field nickname" aria-label="昵称"></div>
             <div id="field-motto" class="rich-field motto" aria-label="阵营格言"></div>
@@ -57,6 +58,10 @@
           </div>
         </div>
       </section>
+      <footer class="credits">
+        <span>原作 <a href="https://www.xiaohongshu.com/user/profile/647e0cd800000000250355fe" target="_blank" rel="noreferrer">Sayoko.</a> · 表单化 <a href="https://tiny.leisiyu.dev/" target="_blank" rel="noreferrer">暝行镌无</a></span>
+        <span>游戏素材 鹰角网络 · <a href="./ASSET-SOURCES.md">素材来源</a> · <a href="./QUOTE-SOURCES.md">原句来源</a> · 非商用</span>
+      </footer>
       <dialog id="operator-dialog" class="operator-dialog">
         <header><h2>选择代表干员 <small>最多 8 位</small></h2><button id="operator-close" type="button">完成</button></header>
         <label class="operator-search">搜索干员<input id="operator-search" type="search" placeholder="姓名、拼音、首字母或英文" autocomplete="off" /></label>

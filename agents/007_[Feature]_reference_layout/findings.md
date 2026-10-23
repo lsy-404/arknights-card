@@ -1,6 +1,17 @@
-# 调研记录
-原图参考为空白卡 set1-2.jpg（1640×2360）及填写例子 set1-1.jpg。布局统一使用 1640×2360 坐标；编辑层以 CSS 整体缩放，导出 Canvas 使用同坐标空间。
+# Findings
 
-关键源图几何：顶线 y158–164；基础区标题 y747、分线 y781；详细区标题 y1063、分线 y1097；七轨中心线分别 y1220、1352、1477、1631、1768、1915、2057；底线 y2139–2146。头像角标外包络约 x1020–1413、y416–807；条码边界约 x1292–1512、y80–138。原作图上轨道端点存在数像素差异，照源图位置绘制。
+The blank reference is 1640x2360. The sheet and export share this coordinate space; editor fields and QR hit targets receive integer coordinates from `web/layout.js` and the editor layer scales as a whole.
 
-选项标记的随机边缘/倾角由每次选择时写入 seed，并由 DOM 与 Canvas 共用；不同渲染周期保持一致。中文昵称转成 UTF-8 字节十六进制后交 JsBarcode Code128 编码，空昵称编码 DOCTOR，输出条码框尺寸固定。引用数据、完整干员全集和富文本组件由独立分支提供；不复制参考图像素或署名。
+Measured output against source after final geometry adjustments:
+
+- Top rule: source bbox (115,158)-(1525,164); output (115,158)-(1525,164).
+- Footer rule: source (123,2139)-(1512,2146); output identical.
+- Basic section tag: source and output (120,747)-(349,782).
+- About me title: source and output (120,1088)-(329,1128) in the measured region.
+- Faction motto text: source (295,607)-(545,646); output (295,607)-(545,646).
+- Faction code B101: source (1427,190)-(1514,228); output (1427,190)-(1514,227), a one-pixel bottom difference.
+- Upper portrait corner: source (1020,416)-(1125,439); output (1020,416)-(1126,439), one pixel wider on the right.
+- Lower portrait corner: source and output (1307,785)-(1413,807).
+- Basic divider and Doctor glyph differ by at most one pixel at their measured endpoints.
+
+All 25 faction defaults were checked in a browser. The DOM editors had no scroll-height overflow, and `drawRichText` reported no clipped motto or quote. A simulated QR image drop on the second canvas slot produced the expected successful QR status without browser errors. Pixel bounds for the QR slots are sourced from LAYOUT.qr.

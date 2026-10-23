@@ -4,7 +4,23 @@ import {
   createSliderControls,
   drawContain,
   drawProfile,
+  barcodeValue,
 } from "../web/render.js";
+import { quoteLayout } from "../web/layout.js";
+
+test("encodes readable nicknames directly in Code 128 and UTF-8 encodes Chinese", () => {
+  assert.equal(barcodeValue("Alpha"), "Alpha");
+  assert.notEqual(barcodeValue("Alpha"), barcodeValue("Beta"));
+  assert.equal(barcodeValue("罗德岛"), "E7BD97E5BEB7E5B29B");
+  assert.equal(barcodeValue(""), "DOCTOR");
+});
+
+test("keeps long faction quotes at a size that fits the original footer space", () => {
+  assert.equal(quoteLayout("A short faction line.").fontSize, 24);
+  const longQuote = quoteLayout("x".repeat(134));
+  assert.equal(longQuote.width, 640);
+  assert.ok(longQuote.fontSize >= 18);
+});
 
 test("renders seven continuously adjustable preference controls", () => {
   const container = {
@@ -42,6 +58,8 @@ test("draws the full-size sheet structure and all seven preference scales", () =
     save() {},
     restore() {},
     scale() {},
+    translate() {},
+    fillText() {},
     setTransform() {},
     clearRect() {},
     fillRect() {},

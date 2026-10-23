@@ -40,6 +40,15 @@ const server = http.createServer((request, response) => {
       setupRichTextToolbar(toolbar);
       const first = await createRichText(firstNode, { initialText: 'alpha', maxLength: 20 });
       const second = await createRichText(secondNode, { initialText: 'beta' });
+      const calibrationNode = document.createElement('div');
+      calibrationNode.id = 'rich-text-calibration';
+      calibrationNode.style.cssText = 'width:640px;height:240px;background:white';
+      document.body.append(calibrationNode);
+      const calibration = await createRichText(calibrationNode, {
+        initialText: 'Ag中\nNy華', defaultSize: 28, maxLength: 100,
+      });
+      const sizeSelect = toolbar.querySelector('[aria-label="字号"]');
+      const colorInput = toolbar.querySelector('[aria-label="文字颜色"]');
 
       const selection = getSelection();
       const selectText = async (editor, start, end) => {
@@ -67,43 +76,134 @@ const server = http.createServer((request, response) => {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       };
 
-      const editor1 = firstNode.querySelector('.ql-editor');
-      await selectText(editor1, 0, 3);
-      toolbar.querySelector('[aria-label="粗体"]').click();
-      const boldRuns = first.getRuns();
-
-      await selectText(editor1, 0, 3);
-      const colorInput = toolbar.querySelector('[aria-label="文字颜色"]');
-      colorInput.value = '#336699';
-      colorInput.dispatchEvent(new Event('input', { bubbles: true }));
-      const colorRuns = first.getRuns();
-
-      await selectText(editor1, 0, 3);
-      const sizeSelect = toolbar.querySelector('[aria-label="字号"]');
-      sizeSelect.value = '64px';
-      sizeSelect.dispatchEvent(new Event('change', { bubbles: true }));
-      const sizeRuns = first.getRuns();
-
-      await selectText(editor1, 0, 3);
-      toolbar.querySelector('[aria-label="清除格式"]').click();
-      const clearRuns = first.getRuns();
-
-      const editor2 = secondNode.querySelector('.ql-editor');
-      await selectText(editor2, 0, 2);
-      toolbar.querySelector('[aria-label="下划线"]').click();
-      const crossFieldRuns = second.getRuns();
-
+      window.richTextTest = { toolbar, firstNode, first, secondNode, second, calibrationNode, calibration, selectText };
+      sizeSelect.addEventListener('mousedown', (event) => { window.richTextTest.sizeMouseDownPrevented = event.defaultPrevented; });
+      colorInput.addEventListener('mousedown', (event) => { window.richTextTest.colorMouseDownPrevented = event.defaultPrevented; });
       const pasted = document.createElement('div');
       pasted.id = 'rich-text-paste';
       const pasteEditor = await createRichText(pasted, { maxLength: 20 });
       document.body.append(pasted);
 
       return {
-        boldRuns, colorRuns, sizeRuns, clearRuns, crossFieldRuns,
         injected: window.pastedScript === 1,
         getText: first.getText(),
       };
     });
+
+    await page.evaluate(async () => {
+      const refs = window.richTextTest;
+      await refs.selectText(refs.firstNode.querySelector('.ql-editor'), 0, 3);
+    });
+    await page.locator('[aria-label="粗体"]').click();
+    result.boldRuns = await page.evaluate(() => window.richTextTest.first.getRuns());
+    const sizeSelect = page.locator('[aria-label="字号"]');
+    await sizeSelect.click();
+    await page.keyboard.press('Alt+ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    result.sizeRuns = await page.evaluate(() => window.richTextTest.first.getRuns());
+    result.selectedSize = await sizeSelect.inputValue();
+    result.boldPressed = await page.locator('[aria-label="粗体"]').getAttribute('aria-pressed');
+    result.sizeMouseDownPrevented = await page.evaluate(() => window.richTextTest.sizeMouseDownPrevented);
+
+    await page.locator('[aria-label="文字颜色"]').click();
+    await page.keyboard.press('Escape');
+    result.colorRuns = await page.evaluate(() => {
+      const input = document.querySelector('[aria-label="文字颜色"]');
+      input.value = '#336699';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      return {
+        runs: window.richTextTest.first.getRuns(),
+        value: input.value,
+        selected: getSelection().toString(),
+        mouseDownPrevented: window.richTextTest.colorMouseDownPrevented,
+      };
+    });
+
+    result.clearRuns = await page.evaluate(async () => {
+      const refs = window.richTextTest;
+      await refs.selectText(refs.firstNode.querySelector('.ql-editor'), 0, 3);
+      refs.toolbar.querySelector('[aria-label="清除格式"]').click();
+      return refs.first.getRuns();
+    });
+    result.crossFieldRuns = await page.evaluate(async () => {
+      const refs = window.richTextTest;
+      await refs.selectText(refs.secondNode.querySelector('.ql-editor'), 0, 2);
+      refs.toolbar.querySelector('[aria-label="下划线"]').click();
+      return {
+        runs: refs.second.getRuns(),
+        toolbar: {
+          underline: refs.toolbar.querySelector('[aria-label="下划线"]').getAttribute('aria-pressed'),
+          size: refs.toolbar.querySelector('[aria-label="字号"]').value,
+          color: refs.toolbar.querySelector('[aria-label="文字颜色"]').value,
+        },
+      };
+    });
+
+    result.pixelComparison = await page.evaluate(async () => {
+      const refs = window.richTextTest;
+      const editor = refs.calibrationNode.querySelector('.ql-editor');
+      const toolbarSize = document.querySelector('[aria-label="字号"]');
+      const styleSelection = async (start, end, size) => {
+        await refs.selectText(editor, start, end);
+        toolbarSize.value = `${size}px`;
+        toolbarSize.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+      await styleSelection(0, 1, 64);
+      await styleSelection(2, 3, 24);
+      await styleSelection(4, 5, 40);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const runs = refs.calibration.getRuns();
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 240;
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      const { drawRichText } = await import('/web/rich-text-render.js');
+      drawRichText(context, runs, {
+        x: 0, y: 0, width: canvas.width, height: canvas.height, fontSize: 28,
+      });
+      document.activeElement.blur();
+      getSelection().removeAllRanges();
+      return { runs, canvas: canvas.toDataURL('image/png') };
+    });
+    const editorPixels = await page.locator('#rich-text-calibration .ql-editor').screenshot();
+    result.pixelComparison.dom = editorPixels.toString('base64');
+    result.pixelComparison.boxes = await page.evaluate(async ({ dom, canvas }) => {
+      const pixels = async (source) => {
+        const image = new Image();
+        image.src = source.startsWith('data:') ? source : `data:image/png;base64,${source}`;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+        const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        const rows = [];
+        for (let y = 0; y < canvas.height; y++) {
+          let ink = false;
+          for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            if (data[i] < 225 && data[i + 1] < 225 && data[i + 2] < 225) { ink = true; break; }
+          }
+          rows.push(ink);
+        }
+        const boxes = [];
+        for (let y = 0; y < rows.length;) {
+          if (!rows[y]) { y++; continue; }
+          const top = y;
+          while (y + 1 < rows.length && rows[y + 1]) y++;
+          boxes.push({ top, bottom: y });
+          y++;
+        }
+        return boxes;
+      };
+      return { dom: await pixels(dom), canvas: await pixels(canvas) };
+    }, { dom: result.pixelComparison.dom, canvas: result.pixelComparison.canvas });
+    delete result.pixelComparison.dom;
+    delete result.pixelComparison.canvas;
 
     await page.evaluate(async () => navigator.clipboard.write([
       new ClipboardItem({
@@ -121,15 +221,25 @@ const server = http.createServer((request, response) => {
     }));
 
     if (!result.boldRuns.some((run) => run.text === 'alp' && run.bold)) throw new Error(`Bold selection was lost: ${JSON.stringify(result)}`);
-    if (!result.colorRuns.some((run) => run.text === 'alp' && run.color === '#336699')) throw new Error(`Color selection was lost: ${JSON.stringify(result)}`);
-    if (!result.sizeRuns.some((run) => run.text === 'alp' && run.size === 64)) throw new Error(`Size selection was lost: ${JSON.stringify(result)}`);
+    if (!result.colorRuns.runs.some((run) => run.text === 'alp' && run.color === '#336699')) throw new Error(`Color selection was lost: ${JSON.stringify(result)}`);
+    if (!result.sizeRuns.some((run) => run.text === 'alp' && run.size === 32)) throw new Error(`Size selection was lost: ${JSON.stringify(result)}`);
+    if (result.selectedSize !== '32px' || result.boldPressed !== 'true') throw new Error(`Toolbar state did not follow the active selection: ${JSON.stringify(result)}`);
+    if (result.sizeMouseDownPrevented || result.colorRuns.mouseDownPrevented) throw new Error(`Native toolbar controls had their mousedown canceled: ${JSON.stringify(result)}`);
     if (result.clearRuns.some((run) => run.bold || run.underline || run.strike || run.size || run.color)) throw new Error(`Clear formatting failed: ${JSON.stringify(result)}`);
-    if (!result.crossFieldRuns.some((run) => run.text === 'be' && run.underline)) throw new Error(`Toolbar did not target the second field: ${JSON.stringify(result)}`);
+    if (!result.crossFieldRuns.runs.some((run) => run.text === 'be' && run.underline)) throw new Error(`Toolbar did not target the second field: ${JSON.stringify(result)}`);
+    if (result.crossFieldRuns.toolbar.underline !== 'true' || result.crossFieldRuns.toolbar.size !== '28px') throw new Error(`Toolbar state did not follow the second field: ${JSON.stringify(result.crossFieldRuns)}`);
+    if (result.pixelComparison.boxes.dom.length !== 2 || result.pixelComparison.boxes.canvas.length !== 2) throw new Error(`Unexpected DOM/Canvas text pixel rows: ${JSON.stringify(result.pixelComparison)}`);
+    const pixelErrors = result.pixelComparison.boxes.dom.flatMap((box, index) => [
+      Math.abs(box.top - result.pixelComparison.boxes.canvas[index].top),
+      Math.abs(box.bottom - result.pixelComparison.boxes.canvas[index].bottom),
+    ]);
+    const maxPixelError = Math.max(...pixelErrors);
+    if (maxPixelError > 2) throw new Error(`DOM/Canvas glyph bounds differ by ${maxPixelError}px: ${JSON.stringify(result.pixelComparison)}`);
     if (pasteResult.injected || /javascript:|<script|<img|onerror/i.test(pasteResult.pastedHtml)) throw new Error(`Paste retained unsafe HTML: ${JSON.stringify(pasteResult)}`);
     if (!pasteResult.pastedText.includes('safe')) throw new Error(`Plain text was lost during paste: ${JSON.stringify(pasteResult)}`);
     if (result.getText !== 'alpha') throw new Error(`Text API mismatch: ${JSON.stringify(result)}`);
     if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
-    console.log('Rich text browser tests passed');
+    console.log(`Rich text browser tests passed; DOM/Canvas text bbox error ${maxPixelError}px`);
   } finally {
     await browser.close();
     server.close();

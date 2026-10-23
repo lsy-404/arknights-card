@@ -22,3 +22,4 @@
 | 017 | [Test] classic_editor | 桌面手机布局及署名开关验证 | 覆盖新版编辑器可观察行为 | ✅ 已完成 |
 | 018 | [Fix] rich_text_size_default | 字号默认项与动态字体值 | 消除工具条空值 | ✅ 已完成 |
 | 019 | [Test] nickname_format_defaults | 昵称粗体开关与默认字号回归 | 验证字体编辑真正改变导出 | ✅ 已完成 |
+| 020 | [Style] form_polish | 统一表单节奏、工具条、选项与滑块样式 | 用户反馈界面杂乱 | ✅ 已完成 |

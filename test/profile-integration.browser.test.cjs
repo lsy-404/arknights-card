@@ -102,8 +102,8 @@ async function exportPng(page) {
     await page.locator('#export-scale').selectOption('1');
 
     const nickname = page.locator('#field-nickname .ql-editor');
-    const toolbarSize = page.locator('#richtext-toolbar [aria-label="字号"]');
-    const boldButton = page.locator('#richtext-toolbar [aria-label="粗体"]');
+    const toolbarSize = page.locator('#toolbar-nickname [aria-label="字号"]');
+    const boldButton = page.locator('#toolbar-nickname [aria-label="粗体"]');
     await nickname.click();
     const nicknameDefaultLabel = await toolbarSize.locator('option:checked').innerText();
     if (await toolbarSize.inputValue() !== '' || nicknameDefaultLabel !== '默认 · 132') {
@@ -130,7 +130,7 @@ async function exportPng(page) {
       failures.push(`Selecting 120px should change the selected nickname's exported glyph pixels: ${explicitSize}`);
     }
     await nickname.press('Control+A');
-    await page.locator('#richtext-toolbar [aria-label="清除格式"]').click();
+    await page.locator('#toolbar-nickname [aria-label="清除格式"]').click();
     await nickname.press('Control+A');
     const restoredDefaultLabel = await toolbarSize.locator('option:checked').innerText();
     if (await toolbarSize.inputValue() !== '' || restoredDefaultLabel !== '默认 · 132') {
@@ -216,7 +216,7 @@ async function exportPng(page) {
       }, faction.quote);
       await page.locator('#field-quote .ql-editor').click();
       await page.locator('#field-quote .ql-editor').press('Control+A');
-      const quoteSizeSelect = page.locator('#richtext-toolbar [aria-label="字号"]');
+      const quoteSizeSelect = page.locator('#toolbar-quote [aria-label="字号"]');
       const selectedQuoteSize = await quoteSizeSelect.inputValue();
       const quoteDefaultLabel = await quoteSizeSelect.locator('option:checked').innerText();
       if (selectedQuoteSize !== '' || quoteDefaultLabel !== `默认 · ${quoteDefaultSize}`) {

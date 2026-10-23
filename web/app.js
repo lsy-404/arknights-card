@@ -1,7 +1,8 @@
 import { factions } from "./data.js";
 import { detectAndCrop, openCropEditor } from "./qr.js";
 import { drawProfile, imageFromFile } from "./render.js";
-import { createRichText, setupRichTextToolbar } from "./rich-text.js";
+import { createRichText } from "./rich-text.js";
+import { onRichTextImageLoad } from "./rich-text-render.js";
 import { factionMotto, mottoFontSize, OPTIONS, SHEET, SLIDERS, quoteLayout } from "./layout.js";
 import { markerSeed } from "./marker.js";
 import { operators } from "./operators.js";
@@ -21,7 +22,6 @@ let searchLimit = 60;
 let searchQuery = "";
 const selectedOperators = new Set();
 const sliders = Object.fromEntries(SLIDERS.map(item => [item.key, item.value]));
-const sliderTouched = new Set();
 const selection = { gender: "", contact: new Set(), server: new Set(), seniority: new Set(), focus: new Set() };
 const markerSeeds = {};
 for (const [group, values] of Object.entries(selection)) {
@@ -33,7 +33,7 @@ const richText = {};
 const homeUrl = document.querySelector('meta[name="home-url"]')?.content;
 if (homeUrl) { $("#home-link").href = homeUrl; $("#home-link").hidden = false; }
 factionSelect.innerHTML = factions.map(item => `<option value="${esc(item.id)}">${esc(item.name)} · ${esc(item.en)}</option>`).join("");
-setupRichTextToolbar($("#richtext-toolbar"));
+onRichTextImageLoad(() => render());
 
 for (const [key, label, initialText, placeholder, size, maxLength] of [
   ["nickname", "#field-nickname", plain.nickname, "此处填写名字", 132, 24],
@@ -42,7 +42,7 @@ for (const [key, label, initialText, placeholder, size, maxLength] of [
   ["oshi", "#field-oshi", "", "我的角色 / CP / CB", 24, 60],
   ["extra", "#field-extra", "", "补充说明", 24, 120],
 ]) {
-  richText[key] = await createRichText($(label), { initialText, placeholder, defaultSize: size, maxLength, onChange: (runs, text) => { plain[key] = text; if (key === "quote") updateQuoteSize(); if (key === "motto") updateMottoSize(); render(); } });
+  richText[key] = await createRichText($(label), { toolbar: $(`#toolbar-${key}`), initialText, placeholder, defaultSize: size, maxLength, onChange: (runs, text) => { plain[key] = text; if (key === "quote") updateQuoteSize(); if (key === "motto") updateMottoSize(); render(); } });
 }
 
 function updateQuoteSize() {
@@ -82,7 +82,6 @@ function readProfile() {
     ...plain,
     richText: Object.fromEntries(Object.entries(richText).map(([key, editor]) => [key, editor.getRuns()])),
     sliders: { ...sliders },
-    sliderTouched: [...sliderTouched],
     markerSeeds,
     gender: selection.gender,
     contacts: [...selection.contact],
@@ -137,7 +136,7 @@ function makeSliders() {
     const endpoints = document.createElement("span"); endpoints.className = "slider-endpoints";
     for (const value of [item.left, item.mid, item.right]) { const label = document.createElement("span"); label.textContent = value; endpoints.append(label); }
     const output = document.createElement("output"); output.textContent = input.value;
-    input.addEventListener("input", () => { sliders[item.key] = Number(input.value); sliderTouched.add(item.key); output.textContent = input.value; render(); });
+    input.addEventListener("input", () => { sliders[item.key] = Number(input.value); output.textContent = input.value; render(); });
     control.append(input, endpoints); row.append(title, control, output);
     return row;
   }));

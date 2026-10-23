@@ -6,7 +6,7 @@ export const LAYOUT = Object.freeze({
   barcode: { x: 1292, y: 80, width: 220, maxWidth: 340, height: 58 },
   headerRule: { x1: 115, y: 161.5, x2: 1526 },
   title: { x: 120, y: 201, width: 334, height: 32 },
-  nickname: { x: 400, y: 330, width: 760, height: 150 },
+  nickname: { x: 400, y: 316, width: 620, height: 150 },
   portrait: { x: 1044, y: 438, width: 350, height: 350 },
   qr: [{ x: 570, y: 486, width: 200, height: 200 }, { x: 790, y: 486, width: 200, height: 200 }],
   motto: { x: 293, y: 604, width: 270, height: 125 },
@@ -69,11 +69,11 @@ export const OPTIONS = Object.freeze({
   focus: ["游戏本身", "角色厨", "同人", "oc", "梦女", "其他"],
 });
 export const SLIDERS = [
-  { key: "spending", title: "关于氪金：", left: "0氪", mid: "微氪", right: "重氪", value: 35 },
-  { key: "goods", title: "关于吃谷：", left: "不太吃", mid: "理性吃", right: "为爱掏空钱包", value: 72 },
-  { key: "story", title: "关于剧情：", left: "跳过党", mid: "挑感兴趣的看", right: "剧情党", value: 36 },
-  { key: "tone", title: "剧情偏好：", left: "温馨日常", mid: "", right: "宏大悲壮", value: 18 },
-  { key: "meta", title: "更偏向于：", left: "XP", mid: "", right: "强度", value: 0 },
-  { key: "shipping", title: "吃更多的是：", left: "cb", mid: "", right: "cp", value: 40 },
+  { key: "spending", title: "关于氪金：", left: "0氪", mid: "微氪", right: "重氪", value: 50 },
+  { key: "goods", title: "关于吃谷：", left: "不太吃", mid: "理性吃", right: "为爱掏空钱包", value: 50 },
+  { key: "story", title: "关于剧情：", left: "跳过党", mid: "挑感兴趣的看", right: "剧情党", value: 50 },
+  { key: "tone", title: "剧情偏好：", left: "温馨日常", mid: "", right: "宏大悲壮", value: 50 },
+  { key: "meta", title: "更偏向于：", left: "XP", mid: "", right: "强度", value: 50 },
+  { key: "shipping", title: "吃更多的是：", left: "cb", mid: "", right: "cp", value: 50 },
   { key: "roguelike", title: "集成战略（肉鸽）：", left: "几乎不碰", mid: "为了奖励打", right: "深度沉迷", value: 50 },
 ];

@@ -4,8 +4,10 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 14px;
+  gap: 4px 12px;
 }
+
+.rich-text-toolbar .rich-text-group { display: inline-flex; }
 
 .rich-text-toolbar button,
 .rich-text-toolbar select,
@@ -15,14 +17,14 @@
 
 .rich-text-toolbar button {
   min-width: 0;
-  min-height: 30px;
+  min-height: 26px;
   margin-left: -1px;
-  padding: 3px 11px;
+  padding: 2px 9px;
   border: 1px solid var(--rule, #cfd5cf);
   border-radius: 0;
   background: #fff;
   color: var(--ink, #202320);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 550;
   white-space: nowrap;
   cursor: pointer;
@@ -32,30 +34,35 @@
 .rich-text-toolbar button:hover { position: relative; border-color: var(--ink, #202320); }
 .rich-text-toolbar button[aria-pressed="true"] { position: relative; border-color: var(--ink, #202320); background: var(--ink, #202320); color: #fff; }
 .rich-text-toolbar button[aria-label="清除格式"] { margin-left: 6px; }
+.rich-text-toolbar button[aria-label="插入图片"] { margin-left: 0; }
 
 .rich-text-toolbar label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   color: var(--muted, #727873);
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 400;
   white-space: nowrap;
 }
 
-.rich-text-toolbar select {
-  min-height: 30px;
-  padding: 2px 6px;
+.field .rich-text-toolbar select {
+  width: auto;
+  min-height: 26px;
+  padding: 1px 4px;
   border: 1px solid var(--rule, #cfd5cf);
   border-radius: 2px;
   background: #fff;
   color: var(--ink, #202320);
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.rich-text-toolbar input[type="color"] {
-  width: 30px;
-  height: 30px;
-  padding: 2px;
+.field .rich-text-toolbar input[type="color"] {
+  width: 28px;
+  min-width: 28px;
+  height: 26px;
+  min-height: 0;
+  padding: 1px;
   border: 1px solid var(--rule, #cfd5cf);
   border-radius: 2px;
   background: #fff;
@@ -78,19 +85,25 @@
   left: 0;
 }
 
-.rich-field.nickname .rich-text-editor {
-  width: 770%;
-  height: 770%;
-  transform: scale(.13);
-  transform-origin: top left;
-}
-
-.rich-field .ql-editor { padding: 10px; }
-.rich-field.nickname .ql-editor { padding: 62px; }
+.rich-field { --field-pad: 10px; }
+.rich-field .rich-text-editor { transform-origin: top left; }
+.rich-field.nickname .rich-text-editor { width: 770%; height: 770%; transform: scale(.13); transform-origin: top left; }
 .rich-field.motto .rich-text-editor { width: 125%; height: 125%; transform: scale(.8); }
-.rich-field.quote .rich-text-editor { width: 150%; height: 150%; transform: scale(.667); }
+.rich-field.quote .rich-text-editor,
 .rich-field.oshi .rich-text-editor,
 .rich-field.extra .rich-text-editor { width: 150%; height: 150%; transform: scale(.667); }
+.rich-field.nickname .ql-editor { padding: calc(var(--field-pad) / .13) !important; }
+.rich-field.motto .ql-editor { padding: calc(var(--field-pad) / .8) !important; }
+.rich-field.quote .ql-editor,
+.rich-field.oshi .ql-editor,
+.rich-field.extra .ql-editor { padding: calc(var(--field-pad) / .667) !important; }
+.rich-field .ql-editor.ql-blank::before { left: calc(var(--ql-pad, 0px)); right: var(--ql-pad, 0px); color: #9aa09a; font-style: normal; }
+.rich-field.nickname .ql-editor.ql-blank::before { --ql-pad: calc(var(--field-pad) / .13); }
+.rich-field.motto .ql-editor.ql-blank::before { --ql-pad: calc(var(--field-pad) / .8); }
+.rich-field.quote .ql-editor.ql-blank::before,
+.rich-field.oshi .ql-editor.ql-blank::before,
+.rich-field.extra .ql-editor.ql-blank::before { --ql-pad: calc(var(--field-pad) / .667); }
+.rich-text-editor .ql-editor img { width: auto; height: 1em; max-width: none; vertical-align: -.15em; }
 
 .rich-text-editor .ql-editor {
   width: 100%;

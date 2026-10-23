@@ -1,26 +1,26 @@
 const SIZE_VALUES = [24, 28, 32, 40, 48, 64, 96, 120, 160, 200];
 let quillPromise;
-let activeEditor = null;
-let toolbarControls = null;
+const IMAGE_MAX_EDGE = 256;
 
-function updateToolbar(editor = activeEditor) {
-  if (!toolbarControls || !editor) return;
+function updateToolbar(editor) {
+  const controls = editor.toolbar;
+  if (!controls) return;
   const range = editor.savedRange ?? editor.quill.getSelection();
   const format = editor.quill.getFormat(range ?? undefined);
-  toolbarControls.bold.setAttribute('aria-pressed', String(Boolean(format.bold)));
-  toolbarControls.underline.setAttribute('aria-pressed', String(Boolean(format.underline)));
-  toolbarControls.strike.setAttribute('aria-pressed', String(Boolean(format.strike)));
+  controls.bold.setAttribute('aria-pressed', String(Boolean(format.bold)));
+  controls.underline.setAttribute('aria-pressed', String(Boolean(format.underline)));
+  controls.strike.setAttribute('aria-pressed', String(Boolean(format.strike)));
 
   const mixedSize = Array.isArray(format.size);
   const size = format.size || '';
-  const defaultOption = toolbarControls.sizeSelect.options[0];
+  const defaultOption = controls.sizeSelect.options[0];
   defaultOption.textContent = `默认 · ${editor.defaultSize}`;
-  toolbarControls.sizeSelect.value = mixedSize
+  controls.sizeSelect.value = mixedSize
     ? '__mixed'
-    : [...toolbarControls.sizeSelect.options].some((option) => option.value === size && size)
+    : [...controls.sizeSelect.options].some((option) => option.value === size && size)
       ? size
       : '';
-  toolbarControls.colorInput.value = format.color || '#171918';
+  controls.colorInput.value = format.color || '#171918';
 }
 
 function applyAtSavedRange(editor, range, name, value) {
@@ -33,6 +33,27 @@ function applyAtSavedRange(editor, range, name, value) {
   }
   editor.savedRange = range;
   updateToolbar(editor);
+}
+
+function scaledImageDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      const ratio = Math.min(1, IMAGE_MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('图片无法读取，请选择有效的图片文件。'));
+    };
+    image.src = url;
+  });
 }
 
 function loadQuill() {
@@ -60,7 +81,6 @@ function normalizedRuns(quill) {
   }
 
   for (const op of remaining) {
-    if (typeof op.insert !== 'string') continue;
     const attributes = op.attributes ?? {};
     const format = {};
     if (attributes.bold) format.bold = true;
@@ -68,8 +88,12 @@ function normalizedRuns(quill) {
     if (attributes.strike) format.strike = true;
     if (attributes.size) format.size = Number.parseFloat(attributes.size);
     if (attributes.color) format.color = attributes.color;
+    if (typeof op.insert !== 'string') {
+      if (typeof op.insert?.image === 'string') runs.push({ image: op.insert.image, ...format });
+      continue;
+    }
     const previous = runs.at(-1);
-    if (previous && Object.keys(format).every((key) => previous[key] === format[key]) &&
+    if (previous && !previous.image && Object.keys(format).every((key) => previous[key] === format[key]) &&
       Object.keys(previous).every((key) => key === 'text' || format[key] === previous[key])) {
       previous.text += op.insert;
     } else {
@@ -79,11 +103,9 @@ function normalizedRuns(quill) {
   return runs;
 }
 
-export function setupRichTextToolbar(container) {
-  if (container.dataset.richTextToolbar === 'true') return container;
-  container.dataset.richTextToolbar = 'true';
+function buildToolbar(container, editor) {
   container.classList.add('rich-text-toolbar');
-  const buttons = {};
+  const controls = {};
 
   const makeButton = (label, key, action) => {
     const button = document.createElement('button');
@@ -92,8 +114,6 @@ export function setupRichTextToolbar(container) {
     button.textContent = label;
     button.addEventListener('mousedown', (event) => event.preventDefault());
     button.addEventListener('click', () => {
-      const editor = activeEditor;
-      if (!editor) return;
       const range = editor.savedRange ?? editor.quill.getSelection();
       if (!range) return;
       editor.quill.setSelection(range, 'silent');
@@ -103,7 +123,7 @@ export function setupRichTextToolbar(container) {
       updateToolbar(editor);
     });
     container.append(button);
-    buttons[key] = button;
+    controls[key] = button;
   };
 
   makeButton('粗体', 'bold', (quill) => quill.format('bold', !quill.getFormat().bold, 'user'));
@@ -131,8 +151,6 @@ export function setupRichTextToolbar(container) {
     sizeSelect.append(option);
   }
   sizeSelect.addEventListener('change', () => {
-    const editor = activeEditor;
-    if (!editor) return;
     const range = editor.savedRange ?? editor.quill.getSelection();
     if (!range) return;
     applyAtSavedRange(editor, range, 'size', sizeSelect.value || false);
@@ -147,22 +165,40 @@ export function setupRichTextToolbar(container) {
   colorInput.setAttribute('aria-label', '文字颜色');
   colorInput.value = '#171918';
   colorInput.addEventListener('input', () => {
-    const editor = activeEditor;
-    if (!editor) return;
     const range = editor.savedRange ?? editor.quill.getSelection();
     if (!range) return;
     applyAtSavedRange(editor, range, 'color', colorInput.value);
   });
-  colorInput.addEventListener('change', () => updateToolbar());
+  colorInput.addEventListener('change', () => updateToolbar(editor));
   colorLabel.append(colorInput);
   container.append(colorLabel);
-  toolbarControls = { ...buttons, sizeSelect, colorInput };
-  updateToolbar();
-  return container;
+
+  const imageInput = document.createElement('input');
+  imageInput.type = 'file';
+  imageInput.accept = 'image/png,image/jpeg,image/webp,image/gif';
+  imageInput.hidden = true;
+  imageInput.setAttribute('aria-label', '插入图片文件');
+  imageInput.addEventListener('change', async () => {
+    const file = imageInput.files?.[0];
+    imageInput.value = '';
+    if (!file) return;
+    try {
+      const source = await scaledImageDataUrl(file);
+      const range = editor.savedRange ?? editor.quill.getSelection() ?? { index: editor.quill.getLength() - 1, length: 0 };
+      editor.quill.insertEmbed(range.index, 'image', source, 'user');
+      editor.quill.setSelection(range.index + 1, 0, 'silent');
+      editor.savedRange = editor.quill.getSelection();
+      editor.quill.focus();
+    } catch { }
+  });
+  makeButton('插入图片', 'image', () => imageInput.click());
+  container.append(imageInput);
+
+  return { ...controls, sizeSelect, colorInput };
 }
 
 export async function createRichText(container, {
-  onChange = () => {}, initialText = '', placeholder = '', defaultSize = 28, maxLength = 2000,
+  onChange = () => {}, initialText = '', placeholder = '', defaultSize = 28, maxLength = 2000, toolbar = null,
 } = {}) {
   const Quill = await loadQuill();
   const size = Quill.import('attributors/style/size');
@@ -177,18 +213,18 @@ export async function createRichText(container, {
   const quill = new Quill(editorNode, {
     theme: null,
     placeholder,
-    formats: ['bold', 'underline', 'strike', 'size', 'color'],
+    formats: ['bold', 'underline', 'strike', 'size', 'color', 'image'],
     modules: { toolbar: false, history: { delay: 500, maxStack: 100, userOnly: true } },
   });
-  const editor = { container, quill, savedRange: null, defaultSize };
+  const editor = { container, quill, savedRange: null, defaultSize, toolbar: null };
+  if (toolbar) editor.toolbar = buildToolbar(toolbar, editor);
   quill.root.setAttribute('aria-label', placeholder || '文本编辑');
   quill.root.setAttribute('spellcheck', 'false');
-  quill.root.addEventListener('focus', () => { activeEditor = editor; updateToolbar(editor); });
-  quill.root.addEventListener('mousedown', () => { activeEditor = editor; updateToolbar(editor); });
+  quill.root.addEventListener('focus', () => updateToolbar(editor));
+  quill.root.addEventListener('mousedown', () => updateToolbar(editor));
   quill.on('selection-change', (range) => {
     if (range) {
       editor.savedRange = range;
-      activeEditor = editor;
       updateToolbar(editor);
     }
   });
@@ -204,13 +240,14 @@ export async function createRichText(container, {
   });
 
   quill.setText(String(initialText).slice(0, maxLength), 'silent');
+  updateToolbar(editor);
   return {
     getText: () => quill.getText().slice(0, -1),
     getRuns: () => normalizedRuns(quill),
     setDefaultSize(value) {
       editor.defaultSize = Number(value);
       editorNode.style.setProperty('--rich-text-default-size', `${editor.defaultSize}px`);
-      if (activeEditor === editor) updateToolbar(editor);
+      updateToolbar(editor);
     },
     setText(text) {
       quill.setText(String(text).slice(0, maxLength), 'silent');

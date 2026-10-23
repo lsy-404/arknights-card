@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="./qr.css" />
     <link rel="stylesheet" href="./rich-text.css" />
     <script src="./vendor/JsBarcode.all.min.js"></script>
+    <script src="./vendor/qrcode.js"></script>
   </head>
   <body>
     <header class="topbar">
@@ -24,14 +25,13 @@
             <h1 id="editor-title">博士扩列档案</h1>
           </div>
         </div>
-        <div id="richtext-toolbar" class="toolbar" aria-label="文字格式"></div>
-
         <form id="profile-form">
           <section class="form-section" aria-labelledby="identity-title">
             <div class="section-heading"><span>01</span><h2 id="identity-title">页眉标题</h2><small>Doctor</small></div>
-            <label class="field rich-field-label"><span class="label-text">卡片昵称</span>
+            <div class="field rich-field-label"><span class="label-text">卡片昵称</span>
+              <div id="toolbar-nickname" class="field-toolbar" aria-label="卡片昵称格式"></div>
               <div id="field-nickname" class="rich-field nickname" aria-label="昵称"></div>
-            </label>
+            </div>
           </section>
 
           <section class="form-section" aria-labelledby="materials-title">
@@ -68,9 +68,10 @@
             <label class="field"><span class="label-text">选择阵营</span>
               <select id="faction-select" aria-label="所属阵营"></select>
             </label>
-            <label class="field rich-field-label"><span class="label-text">阵营格言</span>
+            <div class="field rich-field-label"><span class="label-text">阵营格言</span>
+              <div id="toolbar-motto" class="field-toolbar" aria-label="阵营格言格式"></div>
               <div id="field-motto" class="rich-field motto" aria-label="阵营格言"></div>
-            </label>
+            </div>
           </section>
 
           <section class="form-section" aria-labelledby="basics-title">
@@ -93,16 +94,18 @@
           <section class="form-section" aria-labelledby="preferences-title">
             <div class="section-heading"><span>06</span><h2 id="preferences-title">详细资料</h2><small>About me</small></div>
             <div id="slider-layer" class="slider-list" aria-label="偏好滑块"></div>
-            <label class="field rich-field-label"><span class="label-text">我推的角色 / CP / CB</span>
+            <div class="field rich-field-label"><span class="label-text">我推的角色 / CP / CB</span>
+              <div id="toolbar-oshi" class="field-toolbar" aria-label="我推的角色 / CP / CB格式"></div>
               <div id="field-oshi" class="rich-field oshi" aria-label="我推的角色"></div>
-            </label>
+            </div>
           </section>
 
           <section class="form-section" aria-labelledby="extra-title">
             <div class="section-heading"><span>07</span><h2 id="extra-title">补充说明</h2><small>Note</small></div>
-            <label class="field rich-field-label"><span class="label-text">想对新朋友说</span>
+            <div class="field rich-field-label"><span class="label-text">想对新朋友说</span>
+              <div id="toolbar-extra" class="field-toolbar" aria-label="想对新朋友说格式"></div>
               <div id="field-extra" class="rich-field extra" aria-label="补充说明"></div>
-            </label>
+            </div>
           </section>
 
           <section class="form-section" aria-labelledby="footer-title">
@@ -113,6 +116,7 @@
                 <input id="quote-default" type="text" readonly aria-label="阵营默认语录" />
                 <button id="restore-quote" type="button" class="quiet-button">恢复默认</button>
               </div>
+              <div id="toolbar-quote" class="field-toolbar" aria-label="阵营语录格式"></div>
               <div id="field-quote" class="rich-field quote" aria-label="阵营语录"></div>
             </div>
             <div class="output-settings">

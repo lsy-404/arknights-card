@@ -1,10 +1,62 @@
-.qr-crop-dialog { width: min(800px, calc(100vw - 24px)); max-width: none; border: 1px solid #7b818d; border-radius: 12px; padding: 16px; color: #20232a; background: #fff; }
-.qr-crop-dialog::backdrop { background: #111a; }
-.qr-crop-panel h2 { margin: 0 0 8px; font-size: 1.2rem; }
-.qr-crop-panel p { margin: 0 0 12px; }
-.qr-crop-stage { position: relative; max-width: 100%; margin: auto; overflow: hidden; touch-action: none; }
-.qr-crop-stage canvas { display: block; max-width: 100%; max-height: calc(100vh - 210px); }
-.qr-crop-box { position: absolute; box-sizing: border-box; border: 2px dashed #fff; outline: 1px solid #20232a; background: #80aaff22; cursor: move; touch-action: none; }
-.qr-crop-handle { position: absolute; right: -5px; bottom: -5px; width: 22px; height: 22px; border: 2px solid #fff; border-radius: 50%; background: #315efb; cursor: nwse-resize; touch-action: none; }
-.qr-crop-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
-.qr-crop-actions button { min-height: 40px; padding: 6px 16px; }
+.qr-crop-dialog {
+  width: min(800px, calc(100vw - 24px));
+  max-width: none;
+  border: 1px solid #7b818d;
+  border-radius: 12px;
+  padding: 16px;
+  color: #20232a;
+  background: #fff;
+}
+.qr-crop-dialog::backdrop {
+  background: #111a;
+}
+.qr-crop-panel h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+.qr-crop-panel p {
+  margin: 0 0 12px;
+}
+.qr-crop-stage {
+  position: relative;
+  max-width: 100%;
+  margin: auto;
+  overflow: hidden;
+  touch-action: none;
+}
+.qr-crop-stage canvas {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 210px);
+}
+.qr-crop-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px dashed #fff;
+  outline: 1px solid #20232a;
+  background: #80aaff22;
+  cursor: move;
+  touch-action: none;
+}
+.qr-crop-handle {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #315efb;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.qr-crop-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.qr-crop-actions button {
+  min-height: 40px;
+  padding: 6px 16px;
+}

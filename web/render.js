@@ -69,7 +69,8 @@ function logoMask(image, onDark) {
   if (onDark) {
     const pixels = context.getImageData(0, 0, mask.width, mask.height);
     for (let i = 0; i < pixels.data.length; i += 4) {
-      pixels.data[i + 3] *= (pixels.data[i] + pixels.data[i + 1] + pixels.data[i + 2]) / 765;
+      pixels.data[i + 3] *=
+        (pixels.data[i] + pixels.data[i + 1] + pixels.data[i + 2]) / 765;
     }
     context.putImageData(pixels, 0, 0);
   }

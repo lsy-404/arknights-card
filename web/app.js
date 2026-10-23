@@ -46,19 +46,11 @@ for (const [key, label, initialText, placeholder, size, maxLength] of [
 }
 
 function updateQuoteSize() {
-  const editor = $("#field-quote .rich-text-editor");
   const rect = quoteLayout(plain.quote, document.createElement("canvas").getContext("2d"));
-  if (editor) {
-    editor.style.setProperty("--rich-text-default-size", `${rect.fontSize}px`);
-    editor.querySelector(".ql-editor").style.lineHeight = "1.05";
-  }
+  richText.quote?.setDefaultSize(rect.fontSize);
 }
 function updateMottoSize() {
-  const editor = $("#field-motto .rich-text-editor");
-  if (editor) {
-    editor.style.setProperty("--rich-text-default-size", `${mottoFontSize(plain.motto)}px`);
-    $(".ql-editor", editor).style.lineHeight = "1";
-  }
+  richText.motto?.setDefaultSize(mottoFontSize(plain.motto));
 }
 
 function esc(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;"); }

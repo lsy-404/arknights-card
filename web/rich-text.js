@@ -117,6 +117,7 @@ export function setupRichTextToolbar(container) {
   sizeSelect.setAttribute('aria-label', '字号');
   const defaultSizeOption = document.createElement('option');
   defaultSizeOption.value = '';
+  defaultSizeOption.textContent = '默认';
   sizeSelect.append(defaultSizeOption);
   const mixedSizeOption = document.createElement('option');
   mixedSizeOption.value = '__mixed';
@@ -209,7 +210,7 @@ export async function createRichText(container, {
     setDefaultSize(value) {
       editor.defaultSize = Number(value);
       editorNode.style.setProperty('--rich-text-default-size', `${editor.defaultSize}px`);
-      updateToolbar(editor);
+      if (activeEditor === editor) updateToolbar(editor);
     },
     setText(text) {
       quill.setText(String(text).slice(0, maxLength), 'silent');

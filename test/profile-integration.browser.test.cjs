@@ -62,6 +62,8 @@ async function pngMetrics(page, png) {
         box({ x: 790, y: 486, width: 200, height: 200 }, isDark),
       ],
       portrait: { x: 1044, y: 438, width: 350, height: 350 },
+      operatorImagePixels: box({ x: 742, y: 1210, width: 96, height: 92 }, (r, g, b) =>
+        Math.max(r, g, b) - Math.min(r, g, b) > 18 || Math.abs(r - 238) > 12 || Math.abs(g - 238) > 12 || Math.abs(b - 238) > 12),
       emptyCode: box({ x: 1400, y: 194, width: 112, height: 44 }, isDark),
       choiceMarker: box({ x: 280, y: 770, width: 140, height: 65 }, (r, g, b) => b > r + 24 && g > r + 12 && b > 180),
       choiceText: box({ x: 290, y: 780, width: 115, height: 60 }, isDark),
@@ -163,6 +165,48 @@ async function exportPng(page) {
     const emptyCodeMetrics = await pngMetrics(page, await exportPng(page));
     if (emptyCodeMetrics.emptyCode) failures.push(`Faction with empty code rendered fallback text: ${JSON.stringify(emptyCodeMetrics.emptyCode)}`);
 
+    for (const faction of factions) {
+      await page.locator('#faction-select').selectOption(faction.id);
+      const factionText = await page.evaluate(() => ({
+        quote: document.querySelector('#field-quote .ql-editor').innerText.replace(/\s+/g, ' ').trim(),
+        motto: document.querySelector('#field-motto .ql-editor').innerText.replace(/\s+/g, ' ').trim(),
+        fits: ['#field-motto', '#field-quote'].every((selector) => {
+        const editor = document.querySelector(`${selector} .ql-editor`);
+        return editor.scrollHeight <= editor.clientHeight;
+        }),
+      }));
+      if (factionText.quote !== faction.quote.replace(/\s+/g, ' ').trim() ||
+        factionText.motto !== faction.motto.replace(/\s+/g, ' ').trim()) {
+        failures.push(`Faction text did not retain the full defaults: ${faction.id} ${JSON.stringify(factionText)}`);
+      }
+      if (!factionText.fits) failures.push(`Faction text is clipped in its editor: ${faction.id}`);
+    }
+
+    await page.locator('#operator-open').click();
+    const operatorMore = page.locator('#operator-more');
+    let catalogCount = await page.locator('#operator-results .operator-card').count();
+    for (let pageIndex = 0; pageIndex < 10 && catalogCount < 434; pageIndex++) {
+      await operatorMore.click();
+      catalogCount = await page.locator('#operator-results .operator-card').count();
+    }
+    if (catalogCount !== 434) failures.push(`Operator catalog exposed ${catalogCount} cards instead of 434`);
+    const search = page.locator('#operator-search');
+    for (const term of ['克莱门莎', 'kelaimensha', 'klms', 'Clementia']) {
+      await search.fill(term);
+      const result = page.locator('#operator-results [data-operator="char_4231_clemnt"]');
+      if (!await result.count()) failures.push(`Operator catalog search did not find Clementia for ${JSON.stringify(term)}`);
+    }
+    await search.fill('');
+    await page.locator('#operator-results [data-operator="char_4231_clemnt"]').click();
+    await page.locator('#selected-operators [data-remove="char_4231_clemnt"]').waitFor();
+    await page.locator('#operator-close').click();
+    await page.waitForFunction(() => performance.getEntriesByType('resource').some((entry) =>
+      entry.name.endsWith('/assets/operators/char_4231_clemnt.png')));
+    const operatorExport = await pngMetrics(page, await exportPng(page));
+    if (!operatorExport.operatorImagePixels || operatorExport.operatorImagePixels.count < 1000) {
+      failures.push(`Selected operator portrait was absent from export: ${JSON.stringify(operatorExport.operatorImagePixels)}`);
+    }
+
     const fixture = fs.readFileSync(path.join(__dirname, 'fixtures', 'chat-screenshot.png'));
     const qrFile = { name: 'chat-screenshot.png', mimeType: 'image/png', buffer: fixture };
     const uploadQr = async (slot) => {
@@ -173,7 +217,22 @@ async function exportPng(page) {
       }, slot);
     };
     await uploadQr('qr1');
-    await uploadQr('qr2');
+    await page.evaluate(async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([bytes], 'chat-screenshot.png', { type: 'image/png' }));
+      const target = document.querySelector('#qr-hit-2');
+      target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: transfer }));
+      target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer }));
+    }, fixture.toString('base64'));
+    await page.waitForFunction(() => {
+      const status = document.querySelector('[data-qr-slot="qr2"] .qr-status').textContent;
+      return status.includes('二维码') || status.includes('无法');
+    }, undefined, { timeout: 1500 }).catch(() => {});
+    const dropStatus = await page.locator('[data-qr-slot="qr2"] .qr-status').innerText();
+    if (!dropStatus.includes('二维码')) {
+      failures.push(`Dropping an image on the second QR canvas target did not import it: ${JSON.stringify(dropStatus)}`);
+    }
     const bothQr = await pngMetrics(page, await exportPng(page));
     if (bothQr.qr.some((box) => !box || box.count < 100) ||
       bothQr.qr.some((box, index) => box.x + box.width > bothQr.portrait.x)) {

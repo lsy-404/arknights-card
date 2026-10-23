@@ -60,17 +60,32 @@ export async function detectAndCrop(file) {
     const top = Math.min(...points.map(p => p.y));
     const right = Math.max(...points.map(p => p.x));
     const bottom = Math.max(...points.map(p => p.y));
-    // A 20% margin preserves at least four QR modules even for the smallest symbol.
-    const padX = (right - left) * 0.2;
-    const padY = (bottom - top) * 0.2;
-    const x = Math.max(0, Math.floor(left - padX));
-    const y = Math.max(0, Math.floor(top - padY));
-    const x2 = Math.min(source.width, Math.ceil(right + padX));
-    const y2 = Math.min(source.height, Math.ceil(bottom + padY));
+    const dimension = 17 + 4 * result.version;
+    const distances = [
+      Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y),
+      Math.hypot(points[2].x - points[1].x, points[2].y - points[1].y),
+      Math.hypot(points[3].x - points[2].x, points[3].y - points[2].y),
+      Math.hypot(points[0].x - points[3].x, points[0].y - points[3].y),
+    ];
+    const modulePixels = distances.reduce((sum, distance) => sum + distance, 0) / (4 * dimension);
+    const errorMargin = 2;
+    const x = Math.max(0, Math.floor(left - errorMargin));
+    const y = Math.max(0, Math.floor(top - errorMargin));
+    const x2 = Math.min(source.width, Math.ceil(right + errorMargin));
+    const y2 = Math.min(source.height, Math.ceil(bottom + errorMargin));
+    const regionWidth = x2 - x;
+    const regionHeight = y2 - y;
+    const quietZone = Math.ceil(modulePixels * 4) + errorMargin;
+    const side = Math.ceil(Math.max(regionWidth, regionHeight) + quietZone * 2);
     const cropped = document.createElement('canvas');
-    cropped.width = x2 - x;
-    cropped.height = y2 - y;
-    cropped.getContext('2d').drawImage(source, x, y, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
+    cropped.width = side;
+    cropped.height = side;
+    const offsetX = Math.floor((side - regionWidth) / 2);
+    const offsetY = Math.floor((side - regionHeight) / 2);
+    const cropContext = cropped.getContext('2d');
+    cropContext.fillStyle = '#fff';
+    cropContext.fillRect(0, 0, side, side);
+    cropContext.drawImage(source, x, y, regionWidth, regionHeight, offsetX, offsetY, regionWidth, regionHeight);
     return { canvas: cropped, detected: true, message: '已定位二维码并保留周围白边。' };
   } catch (error) {
     return { canvas: original, detected: false, message: error instanceof Error ? error.message : '图片处理失败，可尝试手动裁切。' };
@@ -98,12 +113,16 @@ export async function openCropEditor(file, onConfirm) {
   const maxW = Math.min(760, innerWidth - 36);
   const maxH = Math.min(innerHeight - 180, 640);
   const scale = Math.min(maxW / image.naturalWidth, maxH / image.naturalHeight, 1);
-  canvas.width = Math.round(image.naturalWidth * scale);
-  canvas.height = Math.round(image.naturalHeight * scale);
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
   stage.style.width = `${canvas.width}px`;
   stage.style.height = `${canvas.height}px`;
   ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-  let rect = { x: canvas.width * 0.15, y: canvas.height * 0.15, w: canvas.width * 0.7, h: canvas.height * 0.7 };
+  const minWidth = Math.min(40, canvas.width);
+  const minHeight = Math.min(40, canvas.height);
+  const initialWidth = Math.min(canvas.width, Math.max(minWidth, canvas.width * 0.7));
+  const initialHeight = Math.min(canvas.height, Math.max(minHeight, canvas.height * 0.7));
+  let rect = { x: (canvas.width - initialWidth) / 2, y: (canvas.height - initialHeight) / 2, w: initialWidth, h: initialHeight };
   const paint = () => { box.style.left = `${rect.x}px`; box.style.top = `${rect.y}px`; box.style.width = `${rect.w}px`; box.style.height = `${rect.h}px`; box.setAttribute('aria-valuetext', `x ${Math.round(rect.x)}, y ${Math.round(rect.y)}, 宽 ${Math.round(rect.w)}, 高 ${Math.round(rect.h)}`); };
   paint();
   dialog.showModal();
@@ -114,7 +133,7 @@ export async function openCropEditor(file, onConfirm) {
       if (!drag) return;
       const dx = (event.clientX - drag.x) * canvas.width / stage.getBoundingClientRect().width;
       const dy = (event.clientY - drag.y) * canvas.height / stage.getBoundingClientRect().height;
-      if (drag.resize) { rect.w = Math.max(40, Math.min(canvas.width - rect.x, drag.w + dx)); rect.h = Math.max(40, Math.min(canvas.height - rect.y, drag.h + dy)); }
+      if (drag.resize) { rect.w = Math.min(canvas.width - rect.x, Math.max(minWidth, drag.w + dx)); rect.h = Math.min(canvas.height - rect.y, Math.max(minHeight, drag.h + dy)); }
       else { rect.x = Math.max(0, Math.min(canvas.width - rect.w, drag.left + dx)); rect.y = Math.max(0, Math.min(canvas.height - rect.h, drag.top + dy)); }
       paint();
     });
@@ -123,7 +142,7 @@ export async function openCropEditor(file, onConfirm) {
       const step = event.shiftKey ? 10 : 2;
       if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
       event.preventDefault();
-      if (event.shiftKey) { rect.w = Math.max(40, Math.min(canvas.width - rect.x, rect.w + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0))); rect.h = Math.max(40, Math.min(canvas.height - rect.y, rect.h + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0))); }
+      if (event.shiftKey) { rect.w = Math.min(canvas.width - rect.x, Math.max(minWidth, rect.w + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0))); rect.h = Math.min(canvas.height - rect.y, Math.max(minHeight, rect.h + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0))); }
       else { rect.x = Math.max(0, Math.min(canvas.width - rect.w, rect.x + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0))); rect.y = Math.max(0, Math.min(canvas.height - rect.h, rect.y + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0))); }
       paint();
     });

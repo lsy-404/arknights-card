@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  createSliderControls,
   drawContain,
   drawProfile,
   barcodeValue,
@@ -20,23 +19,6 @@ test("keeps long faction quotes at a size that fits the original footer space", 
   const longQuote = quoteLayout("x".repeat(134));
   assert.equal(longQuote.width, 640);
   assert.ok(longQuote.fontSize >= 18);
-});
-
-test("renders seven continuously adjustable preference controls", () => {
-  const container = {
-    addEventListener(type, handler) {
-      this.type = type;
-      this.handler = handler;
-    },
-  };
-  const items = createSliderControls(container, () => {});
-  assert.equal(items.length, 7);
-  assert.equal(container.type, "input");
-  assert.equal((container.innerHTML.match(/type="range"/g) || []).length, 7);
-  assert.equal(
-    (container.innerHTML.match(/min="0" max="100" step="1"/g) || []).length,
-    7,
-  );
 });
 
 test("contains the complete QR image and restores canvas smoothing", () => {

@@ -16,7 +16,7 @@
 | 011 | [Feature] operator_catalog | PRTS完整434干员与来源索引 | 完整干员搜索 | ✅ 已完成 |
 | 012 | [Test] editor_integration | 综合导出、条码、二维码、阵营验证 | 验证可观察行为 | ✅ 已完成 |
 | 013 | [Polish] interface_copy | 移除实现说明和原始异常文案 | 清理UI泄露 | ✅ 已完成 |
-| 014 | [Update] classic_editor | 恢复表单与预览、整行选项、标题字体及可关闭浅色署名 | 用户调整编辑体验与排版 | 🔄 进行中 |
+| 014 | [Update] classic_editor | 恢复表单与预览、整行选项、标题字体及可关闭浅色署名 | 用户调整编辑体验与排版 | ✅ 已完成 |
 | 015 | [Style] classic_form | 分组表单、预览栏与响应式编辑布局 | 恢复既有编辑器风格 | ✅ 已完成 |
 | 016 | [Style] natural_typesetting | 整组选项、昵称字体与条码宽度 | 按自然文字排版和统一字体 | ✅ 已完成 |
 | 017 | [Test] classic_editor | 桌面手机布局及署名开关验证 | 覆盖新版编辑器可观察行为 | ✅ 已完成 |

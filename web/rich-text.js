@@ -1,6 +1,34 @@
 const SIZE_VALUES = [24, 28, 32, 40, 48, 64, 96, 120, 160, 200];
 let quillPromise;
 let activeEditor = null;
+let toolbarControls = null;
+
+function updateToolbar(editor = activeEditor) {
+  if (!toolbarControls || !editor) return;
+  const range = editor.savedRange ?? editor.quill.getSelection();
+  const format = editor.quill.getFormat(range ?? undefined);
+  toolbarControls.bold.setAttribute('aria-pressed', String(Boolean(format.bold)));
+  toolbarControls.underline.setAttribute('aria-pressed', String(Boolean(format.underline)));
+  toolbarControls.strike.setAttribute('aria-pressed', String(Boolean(format.strike)));
+
+  const size = format.size || `${editor.defaultSize}px`;
+  toolbarControls.sizeSelect.value = [...toolbarControls.sizeSelect.options].some((option) => option.value === size)
+    ? size
+    : '';
+  toolbarControls.colorInput.value = format.color || '#171918';
+}
+
+function applyAtSavedRange(editor, range, name, value) {
+  editor.quill.focus();
+  editor.quill.setSelection(range, 'silent');
+  if (range.length > 0) {
+    editor.quill.formatText(range.index, range.length, name, value, 'user');
+  } else {
+    editor.quill.format(name, value, 'user');
+  }
+  editor.savedRange = range;
+  updateToolbar(editor);
+}
 
 function loadQuill() {
   if (window.Quill) return Promise.resolve(window.Quill);
@@ -50,8 +78,9 @@ export function setupRichTextToolbar(container) {
   if (container.dataset.richTextToolbar === 'true') return container;
   container.dataset.richTextToolbar = 'true';
   container.classList.add('rich-text-toolbar');
+  const buttons = {};
 
-  const makeButton = (label, action) => {
+  const makeButton = (label, key, action) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.setAttribute('aria-label', label);
@@ -66,14 +95,16 @@ export function setupRichTextToolbar(container) {
       action(editor.quill, range);
       editor.savedRange = editor.quill.getSelection() ?? range;
       editor.quill.focus();
+      updateToolbar(editor);
     });
     container.append(button);
+    buttons[key] = button;
   };
 
-  makeButton('粗体', (quill) => quill.format('bold', !quill.getFormat().bold, 'user'));
-  makeButton('下划线', (quill) => quill.format('underline', !quill.getFormat().underline, 'user'));
-  makeButton('删除线', (quill) => quill.format('strike', !quill.getFormat().strike, 'user'));
-  makeButton('清除格式', (quill) => quill.removeFormat(quill.getSelection(), 'user'));
+  makeButton('粗体', 'bold', (quill) => quill.format('bold', !quill.getFormat().bold, 'user'));
+  makeButton('下划线', 'underline', (quill) => quill.format('underline', !quill.getFormat().underline, 'user'));
+  makeButton('删除线', 'strike', (quill) => quill.format('strike', !quill.getFormat().strike, 'user'));
+  makeButton('清除格式', 'clear', (quill) => quill.removeFormat(quill.getSelection(), 'user'));
 
   const sizeLabel = document.createElement('label');
   sizeLabel.textContent = '字号';
@@ -85,16 +116,12 @@ export function setupRichTextToolbar(container) {
     option.textContent = `${size}`;
     sizeSelect.append(option);
   }
-  sizeSelect.addEventListener('mousedown', (event) => event.preventDefault());
   sizeSelect.addEventListener('change', () => {
     const editor = activeEditor;
     if (!editor) return;
     const range = editor.savedRange ?? editor.quill.getSelection();
     if (!range) return;
-    editor.quill.focus();
-    editor.quill.setSelection(range, 'silent');
-    editor.quill.format('size', sizeSelect.value, 'user');
-    editor.savedRange = editor.quill.getSelection() ?? range;
+    applyAtSavedRange(editor, range, 'size', sizeSelect.value);
   });
   sizeLabel.append(sizeSelect);
   container.append(sizeLabel);
@@ -105,19 +132,18 @@ export function setupRichTextToolbar(container) {
   colorInput.type = 'color';
   colorInput.setAttribute('aria-label', '文字颜色');
   colorInput.value = '#171918';
-  colorInput.addEventListener('mousedown', (event) => event.preventDefault());
   colorInput.addEventListener('input', () => {
     const editor = activeEditor;
     if (!editor) return;
     const range = editor.savedRange ?? editor.quill.getSelection();
     if (!range) return;
-    editor.quill.focus();
-    editor.quill.setSelection(range, 'silent');
-    editor.quill.format('color', colorInput.value, 'user');
-    editor.savedRange = editor.quill.getSelection() ?? range;
+    applyAtSavedRange(editor, range, 'color', colorInput.value);
   });
+  colorInput.addEventListener('change', () => updateToolbar());
   colorLabel.append(colorInput);
   container.append(colorLabel);
+  toolbarControls = { ...buttons, sizeSelect, colorInput };
+  updateToolbar();
   return container;
 }
 
@@ -140,15 +166,16 @@ export async function createRichText(container, {
     formats: ['bold', 'underline', 'strike', 'size', 'color'],
     modules: { toolbar: false, history: { delay: 500, maxStack: 100, userOnly: true } },
   });
-  const editor = { container, quill, savedRange: null };
+  const editor = { container, quill, savedRange: null, defaultSize };
   quill.root.setAttribute('aria-label', placeholder || '文本编辑');
   quill.root.setAttribute('spellcheck', 'false');
-  quill.root.addEventListener('focus', () => { activeEditor = editor; });
-  quill.root.addEventListener('mousedown', () => { activeEditor = editor; });
+  quill.root.addEventListener('focus', () => { activeEditor = editor; updateToolbar(editor); });
+  quill.root.addEventListener('mousedown', () => { activeEditor = editor; updateToolbar(editor); });
   quill.on('selection-change', (range) => {
     if (range) {
       editor.savedRange = range;
       activeEditor = editor;
+      updateToolbar(editor);
     }
   });
   quill.on('text-change', (_delta, _old, source) => {
@@ -159,6 +186,7 @@ export async function createRichText(container, {
       quill.setSelection(maxLength, 0, 'silent');
     }
     onChange(normalizedRuns(quill), quill.getText().slice(0, -1));
+    updateToolbar(editor);
   });
 
   quill.setText(String(initialText).slice(0, maxLength), 'silent');

@@ -6,18 +6,35 @@ function makeFont(run, options) {
   return { size, bold, font: `${bold ? '700 ' : ''}${size}px ${options.fontFamily}` };
 }
 
+function measureLineMetrics(ctx, style, lineHeight) {
+  ctx.font = style.font;
+  const metrics = ctx.measureText('Mg国');
+  const ascent = metrics.fontBoundingBoxAscent ?? metrics.actualBoundingBoxAscent ?? style.size * 0.8;
+  const descent = metrics.fontBoundingBoxDescent ?? metrics.actualBoundingBoxDescent ?? style.size * 0.2;
+  const leading = (style.size * lineHeight - ascent - descent) / 2;
+  return { ascent: ascent + leading, descent: descent + leading };
+}
+
 function collectLines(ctx, runs, options) {
   const lines = [];
-  let line = { parts: [], width: 0, maxSize: options.fontSize };
+  const strut = measureLineMetrics(ctx, makeFont({}, options), options.lineHeight);
+  let line = { parts: [], width: 0, ascent: strut.ascent, descent: strut.descent };
   const finish = () => {
     lines.push(line);
-    line = { parts: [], width: 0, maxSize: options.fontSize };
+    line = { parts: [], width: 0, ascent: strut.ascent, descent: strut.descent };
   };
 
   for (const run of runs ?? []) {
     const text = String(run.text ?? '');
     const style = makeFont(run, options);
+    const metrics = measureLineMetrics(ctx, style, options.lineHeight);
     let token = '';
+    const pushPart = (partText, partWidth) => {
+      line.parts.push({ text: partText, run, ...style, ...metrics, width: partWidth });
+      line.width += partWidth;
+      line.ascent = Math.max(line.ascent, metrics.ascent);
+      line.descent = Math.max(line.descent, metrics.descent);
+    };
     const flush = () => {
       if (!token) return;
       ctx.font = style.font;
@@ -25,17 +42,13 @@ function collectLines(ctx, runs, options) {
       if (!options.singleLine && line.width > 0 && line.width + tokenWidth > options.width && !/^\s+$/.test(token)) finish();
 
       if (tokenWidth <= options.width || options.singleLine) {
-        line.parts.push({ text: token, run, ...style, width: tokenWidth });
-        line.width += tokenWidth;
-        line.maxSize = Math.max(line.maxSize, style.size);
+        pushPart(token, tokenWidth);
       } else {
         for (const character of token) {
           ctx.font = style.font;
           const width = ctx.measureText(character).width;
           if (!options.singleLine && line.width > 0 && line.width + width > options.width) finish();
-          line.parts.push({ text: character, run, ...style, width });
-          line.width += width;
-          line.maxSize = Math.max(line.maxSize, style.size);
+          pushPart(character, width);
         }
       }
       token = '';
@@ -77,13 +90,12 @@ export function drawRichText(ctx, runs, {
     ctx.textBaseline = 'alphabetic';
 
     for (const line of lines) {
-      const lineSize = line.maxSize || fontSize;
-      const lineStep = lineSize * lineHeight;
+      const lineStep = line.ascent + line.descent;
       if (drawY + lineStep > y + height) {
         overflow = true;
         break;
       }
-      const baseline = drawY + lineSize * 0.82;
+      const baseline = drawY + line.ascent;
       let drawX = x;
       for (const part of line.parts) {
         ctx.font = part.font;

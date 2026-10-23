@@ -4,8 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "preview": "node test/server.mjs"
+    "test": "node --test test/*.test.mjs && node test/qr.browser.test.cjs",
+    "preview": "node test/server.mjs",
+    "test:unit": "node --test test/*.test.mjs",
+    "test:browser": "node test/qr.browser.test.cjs"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
 }

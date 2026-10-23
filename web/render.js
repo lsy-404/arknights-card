@@ -57,6 +57,29 @@ const SLIDERS = [
   },
 ];
 
+const logoMasks = new WeakMap();
+
+function logoMask(image, onDark) {
+  if (logoMasks.has(image)) return logoMasks.get(image);
+  const mask = document.createElement("canvas");
+  mask.width = image.naturalWidth;
+  mask.height = image.naturalHeight;
+  const context = mask.getContext("2d");
+  context.drawImage(image, 0, 0);
+  if (onDark) {
+    const pixels = context.getImageData(0, 0, mask.width, mask.height);
+    for (let i = 0; i < pixels.data.length; i += 4) {
+      pixels.data[i + 3] *= (pixels.data[i] + pixels.data[i + 1] + pixels.data[i + 2]) / 765;
+    }
+    context.putImageData(pixels, 0, 0);
+  }
+  context.globalCompositeOperation = "source-in";
+  context.fillStyle = "#171918";
+  context.fillRect(0, 0, mask.width, mask.height);
+  logoMasks.set(image, mask);
+  return mask;
+}
+
 export function createSliderControls(container, onChange) {
   container.innerHTML = SLIDERS.map(
     (item) =>
@@ -157,7 +180,7 @@ export function drawProfile(
   // The faction mark remains identifiable when its local image cannot be decoded.
   const logo = images.logo;
   if (logo?.complete && logo.naturalWidth) {
-    ctx.drawImage(logo, 66, 202, 82, 82);
+    drawContain(ctx, logoMask(logo, faction?.logoOnDark), 66, 202, 82, 82);
   } else {
     ctx.fillStyle = accent;
     ctx.beginPath();
@@ -333,7 +356,7 @@ export function drawProfile(
     const img = images.logo;
     if (img?.complete && img.naturalWidth) {
       ctx.globalAlpha = 0.12;
-      ctx.drawImage(img, 570, 1040, 240, 190);
+      drawContain(ctx, logoMask(img, faction?.logoOnDark), 570, 1040, 240, 190);
       ctx.globalAlpha = 1;
     }
   }

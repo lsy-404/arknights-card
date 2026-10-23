@@ -34,6 +34,7 @@ const server = http.createServer((request, response) => {
       await new Promise((resolve) => { css.onload = resolve; });
 
       const toolbar = document.createElement('div');
+      toolbar.id = 'rich-text-test-toolbar';
       const firstNode = document.createElement('div');
       const secondNode = document.createElement('div');
       document.body.append(toolbar, firstNode, secondNode);
@@ -94,22 +95,22 @@ const server = http.createServer((request, response) => {
       const refs = window.richTextTest;
       await refs.selectText(refs.firstNode.querySelector('.ql-editor'), 0, 3);
     });
-    await page.locator('[aria-label="粗体"]').click();
+    await page.locator('#rich-text-test-toolbar [aria-label="粗体"]').click();
     result.boldRuns = await page.evaluate(() => window.richTextTest.first.getRuns());
-    const sizeSelect = page.locator('[aria-label="字号"]');
+    const sizeSelect = page.locator('#rich-text-test-toolbar [aria-label="字号"]');
     await sizeSelect.click();
     await page.keyboard.press('Alt+ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     result.sizeRuns = await page.evaluate(() => window.richTextTest.first.getRuns());
     result.selectedSize = await sizeSelect.inputValue();
-    result.boldPressed = await page.locator('[aria-label="粗体"]').getAttribute('aria-pressed');
+    result.boldPressed = await page.locator('#rich-text-test-toolbar [aria-label="粗体"]').getAttribute('aria-pressed');
     result.sizeMouseDownPrevented = await page.evaluate(() => window.richTextTest.sizeMouseDownPrevented);
 
-    await page.locator('[aria-label="文字颜色"]').click();
+    await page.locator('#rich-text-test-toolbar [aria-label="文字颜色"]').click();
     await page.keyboard.press('Escape');
     result.colorRuns = await page.evaluate(() => {
-      const input = document.querySelector('[aria-label="文字颜色"]');
+      const input = window.richTextTest.toolbar.querySelector('[aria-label="文字颜色"]');
       input.value = '#336699';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       return {
@@ -143,7 +144,7 @@ const server = http.createServer((request, response) => {
     result.pixelComparison = await page.evaluate(async () => {
       const refs = window.richTextTest;
       const editor = refs.calibrationNode.querySelector('.ql-editor');
-      const toolbarSize = document.querySelector('[aria-label="字号"]');
+      const toolbarSize = window.richTextTest.toolbar.querySelector('[aria-label="字号"]');
       const styleSelection = async (start, end, size) => {
         await refs.selectText(editor, start, end);
         toolbarSize.value = `${size}px`;

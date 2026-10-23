@@ -280,3 +280,8 @@ button { color: inherit; }
   .quote-tools { align-items: stretch; }
   .quote-tools .quiet-button { flex: 0 0 auto; }
 }
+
+.choice-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+.slider-control { min-width: 0; display: grid; gap: 2px; }
+.slider-endpoints { display: flex; justify-content: space-between; gap: 4px; color: var(--muted); font-size: 10px; }
+.slider-row output { text-align: right; color: var(--muted); font-size: 11px; }

@@ -1,4 +1,4 @@
-const DEFAULT_FONT = 'Arial, "Microsoft YaHei", sans-serif';
+import { FONT as DEFAULT_FONT } from "./typography.js";
 
 function makeFont(run, options) {
   const size = Number(run.size) || options.fontSize;

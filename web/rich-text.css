@@ -34,15 +34,25 @@
 }
 
 .rich-text-editor {
+  width: 100%;
+  height: 100%;
+}
+
+.rich-field .rich-text-editor {
   position: absolute;
   top: 0;
   left: 0;
+}
+
+.rich-field.nickname .rich-text-editor {
   width: 770%;
   height: 770%;
   transform: scale(.13);
   transform-origin: top left;
 }
 
+.rich-field .ql-editor { padding: 10px; }
+.rich-field.nickname .ql-editor { padding: 62px; }
 .rich-field.motto .rich-text-editor { width: 125%; height: 125%; transform: scale(.8); }
 .rich-field.quote .rich-text-editor { width: 150%; height: 150%; transform: scale(.667); }
 .rich-field.oshi .rich-text-editor,

@@ -2,8 +2,9 @@
 
 .rich-text-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 6px 14px;
 }
 
 .rich-text-toolbar button,
@@ -13,19 +14,52 @@
 }
 
 .rich-text-toolbar button {
+  min-width: 0;
+  min-height: 30px;
+  margin-left: -1px;
+  padding: 3px 11px;
+  border: 1px solid var(--rule, #cfd5cf);
+  border-radius: 0;
+  background: #fff;
+  color: var(--ink, #202320);
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
   cursor: pointer;
 }
+
+.rich-text-toolbar button:first-child { margin-left: 0; }
+.rich-text-toolbar button:hover { position: relative; border-color: var(--ink, #202320); }
+.rich-text-toolbar button[aria-pressed="true"] { position: relative; border-color: var(--ink, #202320); background: var(--ink, #202320); color: #fff; }
+.rich-text-toolbar button[aria-label="清除格式"] { margin-left: 6px; }
 
 .rich-text-toolbar label {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  color: var(--muted, #727873);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.rich-text-toolbar select {
+  min-height: 30px;
+  padding: 2px 6px;
+  border: 1px solid var(--rule, #cfd5cf);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--ink, #202320);
+  font-size: 12px;
 }
 
 .rich-text-toolbar input[type="color"] {
   width: 30px;
   height: 30px;
   padding: 2px;
+  border: 1px solid var(--rule, #cfd5cf);
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
 }
 
 .rich-text-container {

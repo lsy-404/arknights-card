@@ -3,7 +3,7 @@ import { FONT } from "./typography.js";
 
 export const SHEET = Object.freeze({ width: 1640, height: 2360 });
 export const LAYOUT = Object.freeze({
-  barcode: { x: 1292, y: 80, width: 220, height: 58 },
+  barcode: { x: 1292, y: 80, width: 220, maxWidth: 340, height: 58 },
   headerRule: { x1: 115, y: 161.5, x2: 1526 },
   title: { x: 120, y: 201, width: 334, height: 32 },
   nickname: { x: 400, y: 330, width: 760, height: 150 },

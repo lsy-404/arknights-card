@@ -1,3 +1,3 @@
 # Progress
 
-Merged main as requested. Updated canvas typography, option row drawing, QR placeholder copy, attribution visibility, and reference barcode frame. `npm test` passes (11 unit tests plus QR, rich text, and profile integration browser suites). The browser integration validates that different Code 128 payloads can occupy the same reference frame while retaining payload-dependent bars.
+Follow-up: expanded the barcode frame dynamically according to the Code 128 module count while keeping its right edge fixed at x=1512. The background rectangle matches the adapted frame. Reviewed the 132px nickname line against the original filled example; its expected baseline near y=442 aligns with the reference placeholder baseline near y=446. Browser test ownership is with the faction data agent, who is updating the old fixed-black-bbox assertion for the variable-width barcode.

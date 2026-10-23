@@ -133,7 +133,9 @@ function drawBarcode(ctx, nickname) {
     if (!globalThis.JsBarcode) return;
     const barcode = document.createElement("canvas");
     globalThis.JsBarcode(barcode, value, { format: "CODE128", width: 2, height: h, displayValue: false, margin: 0, background: "#fff", lineColor: "#111" });
-    const { x, width } = LAYOUT.barcode;
+    const moduleCount = barcode.width / 2;
+    const width = Math.max(LAYOUT.barcode.width, Math.min(LAYOUT.barcode.maxWidth, Math.round(moduleCount * 1.6)));
+    const x = LAYOUT.barcode.x + LAYOUT.barcode.width - width;
     ctx.fillStyle = "#fff"; ctx.fillRect(x, y, width, h);
     ctx.drawImage(barcode, x, y, width, h);
   } catch { }

@@ -18,7 +18,7 @@ export const LAYOUT = Object.freeze({
   extra: { x: 740, y: 1697, width: 430, height: 180 },
   supplement: { bulletX: 712, labelX: 737, baseline: 1675, ruleX: 740, ruleY: 1682, ruleWidth: 237 },
   operators: { x: 740, y: 1000, width: 720, height: 270 },
-  insignia: { x: 920, y: 1580, width: 575, height: 465 },
+  insignia: { x: 920, y: 1615, width: 585, height: 501 },
   footerRule: { x1: 123, y: 2143, x2: 1513 },
   signature: { x: 120, y: 2202, width: 720, height: 76 },
   bottomQuote: { x: 1120, y: 2149, width: 380, height: 48 },

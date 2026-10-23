@@ -15,3 +15,10 @@ Measured output against source after final geometry adjustments:
 - Basic divider and Doctor glyph differ by at most one pixel at their measured endpoints.
 
 All 25 faction defaults were checked in a browser. The DOM editors had no scroll-height overflow, and `drawRichText` reported no clipped motto or quote. A simulated QR image drop on the second canvas slot produced the expected successful QR status without browser errors. Pixel bounds for the QR slots are sourced from LAYOUT.qr.
+
+## Follow-up calibration
+
+- Official Rhodes Island PNG is 510x510 with alpha bbox (27,55)-(485,443). `logoMask` now trims to nontransparent bounds before both small-logo and watermark rendering.
+- Small logo uses the original frame (120,516,166,142); watermark frame is (920,1615,585,501).
+- Independent About me glyph ROI [120,1099,360,1140] now measures (133,1099)-(308,1128), matching the reference without the nearby section tag.
+- The byline now constrains `by <nickname>` to 220px; blank names display `by Doctor`.

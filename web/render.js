@@ -45,8 +45,10 @@ export function drawProfile(canvas, profile, faction, operators = [], images = {
   line(LAYOUT.headerRule.x1, LAYOUT.headerRule.y, LAYOUT.headerRule.x2, LAYOUT.headerRule.y, "#171918", 7);
   drawBarcode(ctx, profile.nickname, editing);
   ctx.save();
+  ctx.font = `400 11px Arial, sans-serif`;
+  ctx.fillStyle = "#555";
   ctx.textAlign = "right";
-  text(`by ${profile.nickname || "Doctor"}`, 1512, 153, 11, "#555", 400, "Arial, sans-serif");
+  ctx.fillText(`by ${profile.nickname || "Doctor"}`, 1512, 153, 220);
   ctx.restore();
 
   if (!editing) drawRichText(ctx, profile.richText?.nickname || [], { ...LAYOUT.nickname, fontSize: 80, color: "#171918", fontFamily: FONT, bold: true, singleLine: true });
@@ -67,7 +69,12 @@ export function drawProfile(canvas, profile, faction, operators = [], images = {
   if (!editing) drawOptions(ctx, profile);
 
   sectionTag(ctx, 120, 1063, "详细资料");
+  ctx.save();
+  ctx.translate(133, 1129);
+  ctx.scale(0.983, 1.2);
+  ctx.translate(-132, -1129);
   text("About me◢", 132, 1129, 35, "#171918", 700);
+  ctx.restore();
   text("我推的角色 /cp/cb", 735, 1174, 23, "#171918", 400);
   line(735, 1184, 1115, 1184, "#777", 1.5);
   if (!editing) drawRichText(ctx, profile.richText?.oshi || [], { ...LAYOUT.oshi, fontSize: 24, color: "#171918", fontFamily: FONT });
@@ -88,8 +95,8 @@ export function drawProfile(canvas, profile, faction, operators = [], images = {
   text("补充", LAYOUT.supplement.labelX, LAYOUT.supplement.baseline, 28, "#171918", 400);
   line(LAYOUT.supplement.ruleX, LAYOUT.supplement.ruleY, LAYOUT.supplement.ruleX + LAYOUT.supplement.ruleWidth, LAYOUT.supplement.ruleY, "#171918", 2);
   if (!editing) drawRichText(ctx, profile.richText?.extra || [], { ...LAYOUT.extra, fontSize: 24, color: "#171918", fontFamily: FONT, lineHeight: 1.35 });
-  if (images.logo?.complete && images.logo.naturalWidth) { ctx.save(); ctx.globalAlpha = 0.16; drawContain(ctx, logoMask(images.logo, faction?.logoOnDark), LAYOUT.insignia.x, LAYOUT.insignia.y, LAYOUT.insignia.width, LAYOUT.insignia.height); ctx.restore(); }
-  text("鹰角网络素材由其权利人所有", 1108, 2075, 13, "#888", 400);
+  if (images.logo?.complete && images.logo.naturalWidth) { ctx.save(); ctx.globalAlpha = 0.16; ctx.drawImage(logoMask(images.logo, faction?.logoOnDark), LAYOUT.insignia.x, LAYOUT.insignia.y, LAYOUT.insignia.width, LAYOUT.insignia.height); ctx.restore(); }
+  text("游戏素材：鹰角网络 · PRTS", 1108, 2075, 13, "#888", 400);
 
   line(LAYOUT.footerRule.x1, LAYOUT.footerRule.y, LAYOUT.footerRule.x2, LAYOUT.footerRule.y, "#171918", 8);
   if (!editing) {
@@ -147,7 +154,7 @@ function drawOptions(ctx, profile) {
   }
 }
 function drawHatching(ctx, x, y, width, height) { ctx.save(); ctx.strokeStyle = "#171918"; ctx.lineWidth = 2; for (let row = 0; row < 3; row++) { for (let col = 0; col < width - 20; col += 24) { const xx = x + col, yy = y + row * 25; ctx.beginPath(); ctx.moveTo(xx, yy + 12); ctx.lineTo(xx + 12, yy - 7); ctx.stroke(); } } ctx.restore(); }
-function logoMask(image, onDark) { if (logoMasks.has(image)) return logoMasks.get(image); const mask = document.createElement("canvas"); mask.width = image.naturalWidth; mask.height = image.naturalHeight; const context = mask.getContext("2d"); context.drawImage(image, 0, 0); if (onDark) { const pixels = context.getImageData(0, 0, mask.width, mask.height); for (let i = 0; i < pixels.data.length; i += 4) pixels.data[i + 3] *= (pixels.data[i] + pixels.data[i + 1] + pixels.data[i + 2]) / 765; context.putImageData(pixels, 0, 0); } context.globalCompositeOperation = "source-in"; context.fillStyle = "#171918"; context.fillRect(0, 0, mask.width, mask.height); logoMasks.set(image, mask); return mask; }
+function logoMask(image, onDark) { if (logoMasks.has(image)) return logoMasks.get(image); const source = document.createElement("canvas"); source.width = image.naturalWidth; source.height = image.naturalHeight; const context = source.getContext("2d"); context.drawImage(image, 0, 0); if (onDark) { const pixels = context.getImageData(0, 0, source.width, source.height); for (let i = 0; i < pixels.data.length; i += 4) pixels.data[i + 3] *= (pixels.data[i] + pixels.data[i + 1] + pixels.data[i + 2]) / 765; context.putImageData(pixels, 0, 0); } const pixels = context.getImageData(0, 0, source.width, source.height).data; let left = source.width, top = source.height, right = -1, bottom = -1; for (let y = 0; y < source.height; y++) for (let x = 0; x < source.width; x++) if (pixels[(y * source.width + x) * 4 + 3] > 0) { left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y); } const mask = document.createElement("canvas"); mask.width = right - left + 1; mask.height = bottom - top + 1; const cropped = mask.getContext("2d"); cropped.drawImage(source, left, top, mask.width, mask.height, 0, 0, mask.width, mask.height); cropped.globalCompositeOperation = "source-in"; cropped.fillStyle = "#171918"; cropped.fillRect(0, 0, mask.width, mask.height); logoMasks.set(image, mask); return mask; }
 export function createSliderControls(container, onChange) { container.innerHTML = SLIDERS.map(item => `<input type="range" min="0" max="100" step="1" name="${item.key}" value="${item.value}" aria-label="${item.title}">`).join(""); container.addEventListener("input", onChange); return SLIDERS; }
 export function drawCover(ctx, image, x, y, w, h) { const ratio = Math.max(w / image.width, h / image.height), dw = image.width * ratio, dh = image.height * ratio; ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); ctx.restore(); }
 export function drawContain(ctx, image, x, y, w, h) { const ratio = Math.min(w / image.width, h / image.height), dw = image.width * ratio, dh = image.height * ratio; ctx.imageSmoothingEnabled = false; ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); ctx.imageSmoothingEnabled = true; }

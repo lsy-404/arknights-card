@@ -5,3 +5,5 @@ Windows 固定 worktree 根采用 C:/Users/User/.codex/worktrees，对应用户�
 2026-10-23：实图检查发现PRTS标志为白色透明PNG，绘制新增缓存的深色遮罩与保持比例；整合运动黑底图单独使用亮度作为透明度，原始下载文件保持原样。自定义语录支持清空，底部语录按行绘制，避免长文字越界。
 
 2026-10-23：合并素材后npm test通过（4项单元/引用检查及QR浏览器套件）；IAB实测昵称、阵营、自定义语录保留与恢复、真实滑块拖动、八头像、双QR导入、无QR取消保留原图、头像导入、1x和2x导出。生成PNG分别900x1280/1800x2560，二者各2枚QR均在导出图重新解码为夹具URL。390x844响应式文档宽375，无横向溢出，控制台error为空。公开仓库rulesets为空、branchProtectionRules为空。
+
+2026-10-23：作品源码已公开至 https://github.com/lsy-404/arknights-card，Tiny main 已合并并推送；正式入口 https://tiny.leisiyu.dev/projects/arknights-card/。部署版本 ea8ebd7d-d6a5-4da6-8509-749d9ab1dfe8。线上release-check通过96文件内容核对、6条规范路由及6项清单；正式IAB页面已打开并保存用户可见预览。所有用户要求完成。

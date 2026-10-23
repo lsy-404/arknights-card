@@ -11,10 +11,15 @@ function updateToolbar(editor = activeEditor) {
   toolbarControls.underline.setAttribute('aria-pressed', String(Boolean(format.underline)));
   toolbarControls.strike.setAttribute('aria-pressed', String(Boolean(format.strike)));
 
-  const size = format.size || `${editor.defaultSize}px`;
-  toolbarControls.sizeSelect.value = [...toolbarControls.sizeSelect.options].some((option) => option.value === size)
-    ? size
-    : '';
+  const mixedSize = Array.isArray(format.size);
+  const size = format.size || '';
+  const defaultOption = toolbarControls.sizeSelect.options[0];
+  defaultOption.textContent = `默认 · ${editor.defaultSize}`;
+  toolbarControls.sizeSelect.value = mixedSize
+    ? '__mixed'
+    : [...toolbarControls.sizeSelect.options].some((option) => option.value === size && size)
+      ? size
+      : '';
   toolbarControls.colorInput.value = format.color || '#171918';
 }
 
@@ -110,6 +115,14 @@ export function setupRichTextToolbar(container) {
   sizeLabel.textContent = '字号';
   const sizeSelect = document.createElement('select');
   sizeSelect.setAttribute('aria-label', '字号');
+  const defaultSizeOption = document.createElement('option');
+  defaultSizeOption.value = '';
+  sizeSelect.append(defaultSizeOption);
+  const mixedSizeOption = document.createElement('option');
+  mixedSizeOption.value = '__mixed';
+  mixedSizeOption.textContent = '混合';
+  mixedSizeOption.disabled = true;
+  sizeSelect.append(mixedSizeOption);
   for (const size of SIZE_VALUES) {
     const option = document.createElement('option');
     option.value = `${size}px`;
@@ -121,7 +134,7 @@ export function setupRichTextToolbar(container) {
     if (!editor) return;
     const range = editor.savedRange ?? editor.quill.getSelection();
     if (!range) return;
-    applyAtSavedRange(editor, range, 'size', sizeSelect.value);
+    applyAtSavedRange(editor, range, 'size', sizeSelect.value || false);
   });
   sizeLabel.append(sizeSelect);
   container.append(sizeLabel);
@@ -193,6 +206,11 @@ export async function createRichText(container, {
   return {
     getText: () => quill.getText().slice(0, -1),
     getRuns: () => normalizedRuns(quill),
+    setDefaultSize(value) {
+      editor.defaultSize = Number(value);
+      editorNode.style.setProperty('--rich-text-default-size', `${editor.defaultSize}px`);
+      updateToolbar(editor);
+    },
     setText(text) {
       quill.setText(String(text).slice(0, maxLength), 'silent');
       editor.savedRange = null;

@@ -53,10 +53,11 @@ async function attributionPixels(page, bytes) {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/web/index.html`);
     await page.locator('#export-button').waitFor();
+    await page.locator('#export-scale').selectOption('1');
 
     const desktop = await page.evaluate(() => {
-      const form = document.querySelector('[aria-label="档案编辑工具"]').getBoundingClientRect();
-      const preview = document.querySelector('[aria-label="原尺寸档案画布"]').getBoundingClientRect();
+      const form = document.querySelector('.editor-panel').getBoundingClientRect();
+      const preview = document.querySelector('.preview-panel').getBoundingClientRect();
       return { form: { left: form.left, right: form.right }, preview: { left: preview.left, right: preview.right } };
     });
     if (desktop.form.right > desktop.preview.left) throw new Error(`Desktop editor must place the form left of the preview: ${JSON.stringify(desktop)}`);

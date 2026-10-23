@@ -44,7 +44,7 @@ async function pngMetrics(page, png) {
       return count ? { x: left, y: top, width: right - left + 1, height: bottom - top + 1, count } : null;
     };
     const isDark = (r, g, b) => r < 128 && g < 128 && b < 128;
-    const barcodeRegion = { x: 1240, y: 72, width: 390, height: 78 };
+    const barcodeRegion = { x: 1150, y: 80, width: 380, height: 58 };
     const nicknameRegion = { x: 400, y: 347, width: 760, height: 120 };
     const barcodeBox = box(barcodeRegion, isDark);
     let barcodeBits = '';
@@ -106,12 +106,16 @@ async function exportPng(page) {
     const alpha = await pngMetrics(page, await exportPng(page));
     await nickname.fill('Beta');
     const beta = await pngMetrics(page, await exportPng(page));
-    if (!alpha.barcode.box || !beta.barcode.box || alpha.barcode.bits === beta.barcode.bits) {
-      failures.push(`Nickname edit did not change the exported barcode pixels: Alpha=${JSON.stringify(alpha.barcode.box)}, Beta=${JSON.stringify(beta.barcode.box)}`);
+    await nickname.fill('阿米娅');
+    const chinese = await pngMetrics(page, await exportPng(page));
+    if (!alpha.barcode.box || !beta.barcode.box || !chinese.barcode.box ||
+      alpha.barcode.bits === beta.barcode.bits || beta.barcode.bits === chinese.barcode.bits) {
+      failures.push(`ASCII and Chinese nickname edits must change the exported barcode pattern: ${JSON.stringify({ alpha: alpha.barcode.box, beta: beta.barcode.box, chinese: chinese.barcode.box })}`);
     }
-    for (const [name, metrics] of [['Alpha', alpha], ['Beta', beta]]) {
-      if (!metrics.barcode.box || metrics.barcode.box.width < 220 || metrics.barcode.box.width > 340) {
-        failures.push(`Barcode width for ${name} is outside the natural layout range: ${JSON.stringify(metrics.barcode.box)}`);
+    for (const [name, metrics] of [['Alpha', alpha], ['Beta', beta], ['阿米娅', chinese]]) {
+      const barcode = metrics.barcode.box;
+      if (!barcode || barcode.width < 220 || barcode.width > 340 || barcode.x + barcode.width < 1507 || barcode.x + barcode.width > 1515) {
+        failures.push(`Barcode for ${name} must naturally fit the 220–340px frame ending at the card's right edge: ${JSON.stringify(barcode)}`);
       }
     }
     if (!alpha.nickname.box || !beta.nickname.box || !alpha.doctorTitle ||
@@ -119,6 +123,7 @@ async function exportPng(page) {
       alpha.nickname.box.height < alpha.doctorTitle.height * 0.75 || alpha.nickname.bits === beta.nickname.bits) {
       failures.push(`Nickname heading was not rendered near the Doctor title scale or did not update: ${JSON.stringify({ nickname: alpha.nickname.box, doctor: alpha.doctorTitle, beta: beta.nickname.box })}`);
     }
+    await nickname.fill('Alpha');
 
     const gender = page.locator('#choice-gender');
     const choiceControl = gender.locator('select, input, button').first();

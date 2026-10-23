@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.js && node test/qr.browser.test.cjs",
+    "test": "npm run test:unit && npm run test:browser",
     "preview": "node test/server.mjs",
     "test:unit": "node --test test/*.test.js",
-    "test:browser": "node test/qr.browser.test.cjs"
+    "test:browser": "node test/qr.browser.test.cjs && node test/rich-text.browser.test.cjs && node test/profile-integration.browser.test.cjs"
   },
   "engines": {
     "node": ">=22"

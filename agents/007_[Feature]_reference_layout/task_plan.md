@@ -1,6 +1,7 @@
-# 执行计划
-- [x] 检查空白参考与填写示例，映射原图坐标
-- [x] 替换旧界面为原尺寸定位式编辑器与紧凑控制区
-- [x] 对齐 Canvas 导出、二维码、角色、选项荧光笔和动态条码
-- [x] 对接语录、富文本、干员数据模块接口
-- [x] 运行针对性检查并提交本地分支
+# Reference layout calibration
+
+- [x] Review the original blank and completed references and existing implementation.
+- [x] Correct sheet geometry, field positions, drawing, and interactions.
+- [x] Compare a fresh 1640x2360 export against the blank reference.
+- [x] Run focused unit, QR, faction overflow, and canvas QR drop checks.
+- [x] Commit the finished branch.

@@ -2,8 +2,9 @@ import { factions } from "./data.js";
 import { detectAndCrop, openCropEditor } from "./qr.js";
 import { drawProfile, imageFromFile } from "./render.js";
 import { createRichText, setupRichTextToolbar } from "./rich-text.js";
-import { OPTIONS, SHEET, SLIDERS } from "./layout.js";
+import { factionMotto, LAYOUT, mottoFontSize, OPTIONS, SHEET, SLIDERS, quoteLayout } from "./layout.js";
 import { markerSeed, markerStyle } from "./marker.js";
+import { operators } from "./operators.js";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -14,7 +15,6 @@ const qrRuns = new WeakMap();
 const qrFiles = new WeakMap();
 const operatorImages = new Map();
 const images = { avatar: null, logo: null, qr1: null, qr2: null, operators: operatorImages };
-let operators = [];
 let faction = factions[0];
 let currentQrSlot = null;
 let avatarRun = 0;
@@ -33,18 +33,35 @@ const plain = { nickname: "", motto: "", quote: "", oshi: "", extra: "" };
 const richText = {};
 
 const homeUrl = document.querySelector('meta[name="home-url"]')?.content;
-if (homeUrl) $("#home-link").href = homeUrl;
+if (homeUrl) { $("#home-link").href = homeUrl; $("#home-link").hidden = false; }
 factionSelect.innerHTML = factions.map(item => `<option value="${esc(item.id)}">${esc(item.name)} · ${esc(item.en)}</option>`).join("");
 setupRichTextToolbar($("#richtext-toolbar"));
 
 for (const [key, label, initialText, placeholder, size, maxLength] of [
   ["nickname", "#field-nickname", plain.nickname, "此处填写名字", 80, 24],
-  ["motto", "#field-motto", "", "阵营格言", 25, 70],
-  ["quote", "#field-quote", "", "阵营语录", 24, 90],
+  ["motto", "#field-motto", "", "阵营格言", 19, 300],
+  ["quote", "#field-quote", "", "阵营语录", 16, 300],
   ["oshi", "#field-oshi", "", "我的角色 / CP / CB", 24, 60],
   ["extra", "#field-extra", "", "补充说明", 24, 120],
 ]) {
-  richText[key] = await createRichText($(label), { initialText, placeholder, defaultSize: size, maxLength, onChange: (runs, text) => { plain[key] = text; render(); } });
+  richText[key] = await createRichText($(label), { initialText, placeholder, defaultSize: size, maxLength, onChange: (runs, text) => { plain[key] = text; if (key === "quote") updateQuoteSize(); if (key === "motto") updateMottoSize(); render(); } });
+}
+
+function updateQuoteSize() {
+  const editor = $("#field-quote .rich-text-editor");
+  const field = $("#field-quote"), rect = quoteLayout(plain.quote, document.createElement("canvas").getContext("2d"));
+  Object.assign(field.style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+  if (editor) {
+    editor.style.setProperty("--rich-text-default-size", `${rect.fontSize}px`);
+    editor.querySelector(".ql-editor").style.lineHeight = "1.05";
+  }
+}
+function updateMottoSize() {
+  const editor = $("#field-motto .rich-text-editor");
+  if (editor) {
+    editor.style.setProperty("--rich-text-default-size", `${mottoFontSize(plain.motto)}px`);
+    $(".ql-editor", editor).style.lineHeight = "1";
+  }
 }
 
 function esc(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;"); }
@@ -54,11 +71,13 @@ function chooseFaction(id) {
   faction = next;
   factionSelect.value = faction.id;
   document.documentElement.style.setProperty("--accent", faction.color || "#61b9e6");
-  quoteState = { quote: faction.quote || "", motto: faction.motto || "" };
+  quoteState = { quote: faction.quote || "", motto: factionMotto(faction) };
   plain.quote = quoteState.quote;
   plain.motto = quoteState.motto;
   richText.quote.setText(plain.quote);
   richText.motto.setText(plain.motto);
+  updateQuoteSize();
+  updateMottoSize();
   $("#quote-default").value = plain.quote;
   images.logo = null;
   if (faction.logo) {
@@ -89,17 +108,14 @@ function readProfile() {
 }
 
 function makeChoices() {
-  const geometries = {
-    gender: { x: 304, y: 784, widths: [83, 83, 108] },
-    contact: { x: 304, y: 838, widths: [108, 83, 185] },
-    server: { x: 304, y: 891, widths: [58, 54, 86, 54, 54, 54] },
-    seniority: { x: 304, y: 944, widths: [82, 82, 82, 172] },
-    focus: { x: 304, y: 997, widths: [173, 119, 83, 57, 83, 83] },
-  };
+  const rowYs = Object.fromEntries(Object.keys(OPTIONS).map((group, index) => [group, LAYOUT.optionTextTopRows[index]]));
+  const measure = document.createElement("canvas").getContext("2d");
   for (const [group, options] of Object.entries(OPTIONS)) {
-    const host = $(`#choice-${group}`), geo = geometries[group];
+    const host = $(`#choice-${group}`);
     host.innerHTML = "";
-    const positionX = (value, index) => geo.x + geo.widths.slice(0, index).reduce((sum, width) => sum + width, 0);
+    const size = group === "focus" ? 26 : 29;
+    measure.font = `700 ${size}px Arial, "Microsoft YaHei", "Noto Sans SC", sans-serif`;
+    let x = LAYOUT.optionStartX;
     options.forEach((value, index) => {
       const button = document.createElement("button");
       button.type = "button";
@@ -107,9 +123,11 @@ function makeChoices() {
       button.dataset.value = value;
       button.setAttribute("aria-pressed", String(isSelected(group, value)));
       button.textContent = value + (index < options.length - 1 ? "/" : "");
-      Object.assign(button.style, { position: "absolute", left: `${positionX(value, index)}px`, top: `${geo.y}px`, width: `${geo.widths[index]}px`, height: `44px`, textAlign: "left", color: "#171918", "--marker": "#63c4ed" });
+      const width = Math.ceil(measure.measureText(button.textContent).width) + 5;
+      Object.assign(button.style, { position: "absolute", left: `${x}px`, top: `${rowYs[group]}px`, width: `${width}px`, height: "44px", padding: "0", textAlign: "left", color: "#171918", fontFamily: 'Arial, "Microsoft YaHei", "Noto Sans SC", sans-serif', fontSize: `${size}px`, fontWeight: "700", "--marker": "#63c4ed" });
       host.append(button);
       refreshMarker(button);
+      x += width;
     });
   }
 }
@@ -142,11 +160,13 @@ function makeSliders() {
   const layer = $("#slider-layer");
   layer.innerHTML = "";
   const trackYs = [1220, 1352, 1477, 1631, 1768, 1915, 2057];
+  const trackXs = [121, 122, 123, 123, 120, 117, 121];
+  const trackX2s = [498, 500, 501, 501, 498, 495, 499];
   SLIDERS.forEach((item, i) => {
     const input = document.createElement("input");
     input.type = "range"; input.min = "0"; input.max = "100"; input.value = sliders[item.key]; input.setAttribute("aria-label", item.title);
     input.dataset.key = item.key;
-    Object.assign(input.style, { position: "absolute", left: `${(i === 0 ? 122 : [123,123,120,117,121,121][i - 1]) / SHEET.width * 100}%`, top: `${(trackYs[i] - 17) / 2360 * 100}%`, width: `${378 / SHEET.width * 100}%`, height: `${34 / 2360 * 100}%` });
+    Object.assign(input.style, { position: "absolute", left: `${trackXs[i]}px`, top: `${trackYs[i] - 17}px`, width: `${trackX2s[i] - trackXs[i]}px`, height: "34px" });
     input.addEventListener("input", () => { sliders[item.key] = Number(input.value); sliderTouched.add(item.key); input.classList.add("touched"); render(); });
     layer.append(input);
   });
@@ -160,7 +180,24 @@ function render() {
 }
 
 function fitSheet() {
+  placeRichFields();
+  Object.assign($("#avatar-hit").style, { left: `${LAYOUT.portrait.x}px`, top: `${LAYOUT.portrait.y}px`, width: `${LAYOUT.portrait.width}px`, height: `${LAYOUT.portrait.height}px` });
+  for (const [index, rect] of LAYOUT.qr.entries()) {
+    Object.assign($(`#qr-hit-${index + 1}`).style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+  }
   $("#sheet-editors").style.transform = `scale(${sheet.clientWidth / SHEET.width})`;
+}
+function placeRichFields() {
+  const rects = {
+    nickname: LAYOUT.nickname,
+    motto: LAYOUT.motto,
+    quote: quoteLayout(plain.quote, document.createElement("canvas").getContext("2d")),
+    oshi: LAYOUT.oshi,
+    extra: LAYOUT.extra,
+  };
+  for (const [key, rect] of Object.entries(rects)) {
+    Object.assign($(`#field-${key}`).style, { left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+  }
 }
 new ResizeObserver(fitSheet).observe(sheet);
 fitSheet();
@@ -183,26 +220,38 @@ $("#avatar-hit").addEventListener("click", () => $("#avatar-file").click());
 $("#qr-count").addEventListener("change", () => { $("#qr-hit-2").hidden = $("#qr-count").value !== "2"; $$('.qr-slot')[1].hidden = $("#qr-count").value !== "2"; render(); });
 $("#qr-hit-1").addEventListener("click", () => $$('.qr-slot')[0].querySelector(".qr-file").click());
 $("#qr-hit-2").addEventListener("click", () => $$('.qr-slot')[1].querySelector(".qr-file").click());
+for (const [index, slot] of $$('.qr-slot').entries()) {
+  const hit = $(`#qr-hit-${index + 1}`);
+  hit.addEventListener("pointerenter", () => currentQrSlot = slot);
+  hit.addEventListener("focusin", () => currentQrSlot = slot);
+  hit.addEventListener("pointerleave", () => { if (currentQrSlot === slot) currentQrSlot = null; });
+  hit.addEventListener("dragover", event => event.preventDefault());
+  hit.addEventListener("drop", event => {
+    event.preventDefault();
+    const file = [...event.dataTransfer.files].find(item => item.type.startsWith("image/"));
+    if (file) handleQrFile(slot, file);
+  });
+}
 
 function qrKey(slot) { return slot.dataset.qrSlot; }
 function setQrStatus(slot, message, error = false) { const status = $(".qr-status", slot); status.textContent = message; status.classList.toggle("error", error); }
 function commitQr(slot, cropped) { images[qrKey(slot)] = cropped; render(); }
 async function handleQrFile(slot, file) {
   const error = validImage(file, true); if (error) { setQrStatus(slot, error, true); return; }
-  const run = (qrRuns.get(slot) || 0) + 1; qrRuns.set(slot, run); qrFiles.set(slot, file); $(".crop-link", slot).hidden = false; setQrStatus(slot, "正在本地检查二维码…");
+  const run = (qrRuns.get(slot) || 0) + 1; qrRuns.set(slot, run); qrFiles.set(slot, file); $(".crop-link", slot).hidden = false; setQrStatus(slot, "正在识别二维码…");
   try {
     const result = await detectAndCrop(file);
     if (qrRuns.get(slot) !== run) return;
     if (result.detected) { commitQr(slot, result.canvas); setQrStatus(slot, result.message || "二维码已识别并裁切。"); return; }
     setQrStatus(slot, `${result.message || "未能自动识别。"} 可继续手动调整裁切框。`); await openManualCrop(slot, file, run);
-  } catch (error) { if (qrRuns.get(slot) !== run) return; setQrStatus(slot, `自动检查未完成：${error.message} 可继续手动裁切。`, true); await openManualCrop(slot, file, run); }
+  } catch { if (qrRuns.get(slot) !== run) return; setQrStatus(slot, "二维码未能自动识别，请手动调整裁切框。", true); await openManualCrop(slot, file, run); }
 }
 async function openManualCrop(slot, file, run) {
   try {
     const result = await openCropEditor(file, cropped => { if (qrRuns.get(slot) === run) { commitQr(slot, cropped); setQrStatus(slot, "已手动裁切。"); } });
     if (qrRuns.get(slot) !== run) return;
     if (result?.message) setQrStatus(slot, result.message); else if (result?.ok === false) setQrStatus(slot, "已取消手动裁切，当前二维码未变更。");
-  } catch (error) { if (qrRuns.get(slot) === run) setQrStatus(slot, `无法打开手动裁切：${error.message}`, true); }
+  } catch { if (qrRuns.get(slot) === run) setQrStatus(slot, "无法打开裁切，请重新选择图片。", true); }
 }
 $$('.qr-slot').forEach(slot => {
   const input = $(".qr-file", slot);
@@ -220,18 +269,15 @@ document.addEventListener("paste", event => {
   if (item) { event.preventDefault(); const file = item.getAsFile(); if (file) handleQrFile(currentQrSlot, file); }
 });
 
-async function loadOperators() {
-  try { ({ operators } = await import("./operators.js")); } catch { operators = []; }
-  renderOperatorResults();
-}
 $("#operator-open").addEventListener("click", () => $("#operator-dialog").showModal());
 $("#operator-close").addEventListener("click", () => $("#operator-dialog").close());
-$("#operator-search").addEventListener("input", event => { searchQuery = event.target.value.trim().toLocaleLowerCase(); searchLimit = 60; renderOperatorResults(); });
+$("#operator-search").addEventListener("input", event => { searchQuery = normalizeOperatorSearch(event.target.value); searchLimit = 60; renderOperatorResults(); });
 $("#operator-more").addEventListener("click", () => { searchLimit += 60; renderOperatorResults(); });
 function matchesOperator(op) {
   if (!searchQuery) return true;
-  return [op.name, op.pinyin, op.initials, op.en].some(value => String(value || "").toLocaleLowerCase().includes(searchQuery));
+  return [op.name, op.pinyin, op.initials, op.en].some(value => normalizeOperatorSearch(value).includes(searchQuery));
 }
+function normalizeOperatorSearch(value) { return String(value || "").toLocaleLowerCase().replace(/\s+/gu, ""); }
 function renderOperatorResults() {
   const matches = operators.filter(matchesOperator), shown = matches.slice(0, searchLimit);
   $("#operator-results").innerHTML = shown.map(op => `<button class="operator-card${selectedOperators.has(op.id) ? " selected" : ""}" type="button" data-operator="${esc(op.id)}"><img src="${esc(op.image)}" loading="lazy" alt=""><span>${esc(op.name)}</span></button>`).join("");
@@ -262,16 +308,18 @@ $("#export-button").addEventListener("click", () => {
   drawProfile(output, profile, faction, operators.filter(item => selectedOperators.has(item.id)), images, { editing: false });
   output.toBlob(blob => {
     if (!blob) { $("#export-status").textContent = "PNG 生成失败，请稍后重试。"; return; }
-    const url = URL.createObjectURL(blob), anchor = document.createElement("a"); anchor.href = url; anchor.download = "doctor-profile.png"; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); $("#export-status").textContent = "档案 PNG 已导出。";
+    const url = URL.createObjectURL(blob), anchor = document.createElement("a"); anchor.href = url; anchor.download = "doctor-profile.png"; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); $("#export-status").textContent = "已导出 PNG。";
   }, "image/png");
 });
 
-makeChoices(); makeSliders(); chooseFaction(faction.id); loadOperators();
+makeChoices(); makeSliders(); chooseFaction(faction.id); renderOperatorResults();
 $("#restore-quote").addEventListener("click", () => {
   plain.quote = faction.quote || "";
-  plain.motto = faction.motto || "";
+  plain.motto = factionMotto(faction);
   richText.quote.setText(plain.quote);
   richText.motto.setText(plain.motto);
+  updateQuoteSize();
+  updateMottoSize();
   $("#quote-default").value = plain.quote;
   render();
 });

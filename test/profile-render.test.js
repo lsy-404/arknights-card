@@ -36,18 +36,21 @@ test("contains the complete QR image and restores canvas smoothing", () => {
   assert.equal(context.imageSmoothingEnabled, true);
 });
 
-test("draws the chosen faction accent, profile text, quote, and seven preference tracks", () => {
+test("draws the full-size sheet structure and all seven preference scales", () => {
   const calls = [];
   const context = {
     save() {},
     restore() {},
     scale() {},
+    setTransform() {},
+    clearRect() {},
     fillRect() {},
     beginPath() {},
     moveTo() {},
     lineTo() {},
     stroke() {},
     closePath() {},
+    roundRect() {},
     fill() {},
     arc() {},
     rect() {},
@@ -59,7 +62,7 @@ test("draws the chosen faction accent, profile text, quote, and seven preference
       return { width: String(value).length * 7 };
     },
   };
-  const canvas = { width: 900, height: 1280, getContext: () => context };
+  const canvas = { width: 1640, height: 2360, getContext: () => context };
   drawProfile(
     canvas,
     {
@@ -84,21 +87,16 @@ test("draws the chosen faction accent, profile text, quote, and seven preference
     },
     { name: "罗德岛", en: "RHODES ISLAND", code: "RI-01", color: "#123456" },
   );
-  assert.ok(calls.includes("测试博士"));
-  assert.ok(calls.includes("测试语录"));
-  assert.ok(calls.includes("罗德岛"));
-  assert.equal(
-    calls.filter((value) =>
-      [
-        "氪金倾向",
-        "吃谷习惯",
-        "剧情习惯",
-        "剧情偏好",
-        "培养取向",
-        "关系偏好",
-        "集成战略",
-      ].includes(value),
-    ).length,
-    7,
-  );
+  assert.ok(calls.includes("个人档案"));
+  assert.ok(calls.includes("基础信息"));
+  assert.ok(calls.includes("详细资料"));
+  for (const title of [
+        "关于氪金：",
+        "关于吃谷：",
+        "关于剧情：",
+        "剧情偏好：",
+        "更偏向于：",
+        "吃更多的是：",
+        "集成战略（肉鸽）：",
+  ]) assert.ok(calls.includes(title), `missing scale label: ${title}`);
 });

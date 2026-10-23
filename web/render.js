@@ -1,435 +1,132 @@
-const SLIDERS = [
-  {
-    key: "spending",
-    title: "关于氪金",
-    left: "0氪",
-    mid: "微氪",
-    right: "重氪",
-    value: 35,
-  },
-  {
-    key: "goods",
-    title: "关于吃谷",
-    left: "不太吃",
-    mid: "理性吃",
-    right: "为爱买单",
-    value: 72,
-  },
-  {
-    key: "story",
-    title: "关于剧情",
-    left: "剧情跳过",
-    mid: "感兴趣会看",
-    right: "剧情党",
-    value: 36,
-  },
-  {
-    key: "tone",
-    title: "剧情偏好",
-    left: "温馨日常",
-    mid: "",
-    right: "宏大悲壮",
-    value: 18,
-  },
-  {
-    key: "meta",
-    title: "更偏向于",
-    left: "XP",
-    mid: "",
-    right: "强度",
-    value: 0,
-  },
-  {
-    key: "shipping",
-    title: "关系偏好",
-    left: "CB",
-    mid: "",
-    right: "CP",
-    value: 40,
-  },
-  {
-    key: "roguelike",
-    title: "集成战略",
-    left: "几乎不碰",
-    mid: "为了奖励打",
-    right: "深度沉迷",
-    value: 50,
-  },
-];
+import { drawRichText } from "./rich-text-render.js";
+import { LAYOUT, OPTIONS, SHEET, SLIDERS } from "./layout.js";
+import { drawMarker } from "./marker.js";
 
+const FONT = 'Arial, "Microsoft YaHei", "Noto Sans SC", sans-serif';
 const logoMasks = new WeakMap();
 
-function logoMask(image, onDark) {
-  if (logoMasks.has(image)) return logoMasks.get(image);
-  const mask = document.createElement("canvas");
-  mask.width = image.naturalWidth;
-  mask.height = image.naturalHeight;
-  const context = mask.getContext("2d");
-  context.drawImage(image, 0, 0);
-  if (onDark) {
-    const pixels = context.getImageData(0, 0, mask.width, mask.height);
-    for (let i = 0; i < pixels.data.length; i += 4) {
-      pixels.data[i + 3] *=
-        (pixels.data[i] + pixels.data[i + 1] + pixels.data[i + 2]) / 765;
-    }
-    context.putImageData(pixels, 0, 0);
-  }
-  context.globalCompositeOperation = "source-in";
-  context.fillStyle = "#171918";
-  context.fillRect(0, 0, mask.width, mask.height);
-  logoMasks.set(image, mask);
-  return mask;
-}
-
-export function createSliderControls(container, onChange) {
-  container.innerHTML = SLIDERS.map(
-    (item) =>
-      `<label class="slider-row"><span class="slider-name">${item.title}<small>${item.mid || "拖动选择"}</small></span><span class="slider-control"><input type="range" min="0" max="100" step="1" name="${item.key}" value="${item.value}" aria-label="${item.title}"><span class="slider-ends"><span>${item.left}</span><span>${item.right}</span></span></span></label>`,
-  ).join("");
-  container.addEventListener("input", onChange);
-  return SLIDERS;
-}
-
-export function drawProfile(
-  canvas,
-  profile,
-  faction,
-  operators = [],
-  images = {},
-) {
+export function drawProfile(canvas, profile, faction, operators = [], images = {}, { editing = true } = {}) {
   const ctx = canvas.getContext("2d");
-  const w = canvas.width;
-  const scale = w / 900;
+  const scale = canvas.width / SHEET.width;
   ctx.save();
-  ctx.scale(scale, scale);
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.clearRect(0, 0, SHEET.width, SHEET.height);
   ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, 900, 1280);
-  const accent = faction?.color || "#57a9c7";
-  const line = (x1, y1, x2, y2, color = "#161918", width = 1) => {
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-  };
-  const text = (
-    value,
-    x,
-    y,
-    size = 15,
-    color = "#171918",
-    weight = 400,
-    font = "Noto Sans SC, sans-serif",
-  ) => {
-    ctx.fillStyle = color;
+  ctx.fillRect(0, 0, SHEET.width, SHEET.height);
+  const accent = faction?.color || "#69bce3";
+  const text = (value, x, y, size, color = "#171918", weight = 400, font = FONT) => {
     ctx.font = `${weight} ${size}px ${font}`;
-    ctx.fillText(String(value || ""), x, y);
-  };
-  const wrap = (
-    value,
-    x,
-    y,
-    maxWidth,
-    lineHeight,
-    size = 13,
-    color = "#303532",
-    maxLines = 4,
-  ) => {
     ctx.fillStyle = color;
-    ctx.font = `400 ${size}px Noto Sans SC, sans-serif`;
-    let row = "",
-      count = 0;
-    for (const paragraph of String(value || "").split(/\r?\n/)) {
-      for (const ch of paragraph) {
-        const test = row + ch;
-        if (ctx.measureText(test).width > maxWidth && row) {
-          text(row, x, y + count * lineHeight, size, color);
-          row = ch;
-          if (++count >= maxLines) return;
-        } else row = test;
-      }
-      if (row && count < maxLines) {
-        text(row, x, y + count * lineHeight, size, color);
-        row = "";
-        count++;
-      }
-      if (count >= maxLines) return;
-    }
+    ctx.fillText(String(value ?? ""), x, y);
+  };
+  const line = (x1, y1, x2, y2, color = "#171918", width = 2) => {
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = width;
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
   };
   ctx.fillStyle = accent;
-  ctx.fillRect(65, 60, 6, 42);
+  ctx.fillRect(118, 324, 22, 178);
   ctx.fillStyle = "#171918";
-  ctx.fillRect(65, 24, 75, 24);
-  text("个人档案", 70, 41, 11, "#fff", 700);
-  text("PERSONAL PROFILE", 65, 67, 10, "#171918", 700, "DM Sans, sans-serif");
-  text("DATA NUMBER", 765, 36, 9, "#898d89", 400, "DM Mono, monospace");
-  text(
-    faction?.code || "RI-01",
-    765,
-    61,
-    20,
-    "#171918",
-    700,
-    "DM Mono, monospace",
-  );
-  line(65, 82, 835, 82, "#171918", 2);
-  const nickname = profile.nickname || "此处填写名字";
-  text("DR.", 65, 159, 56, "#171918", 400, "DM Sans, sans-serif");
-  textFit(nickname, 163, 156, 37, 420, "#858986", 700);
-  text("DOCTOR", 67, 179, 14, "#171918", 700, "DM Sans, sans-serif");
-  // The faction mark remains identifiable when its local image cannot be decoded.
-  const logo = images.logo;
-  if (logo?.complete && logo.naturalWidth) {
-    drawContain(ctx, logoMask(logo, faction?.logoOnDark), 66, 202, 82, 82);
-  } else {
-    ctx.fillStyle = accent;
-    ctx.beginPath();
-    ctx.moveTo(107, 199);
-    ctx.lineTo(148, 276);
-    ctx.lineTo(67, 276);
-    ctx.closePath();
-    ctx.fill();
-    text(
-      faction?.name?.slice(0, 2) || "RI",
-      88,
-      249,
-      18,
-      "#fff",
-      700,
-      "DM Sans, sans-serif",
-    );
-  }
-  wrap(faction?.name || "RHODES ISLAND", 163, 224, 280, 20, 14, "#2c302d", 2);
-  wrap(faction?.en || "PERSONAL PROFILE", 163, 249, 280, 17, 10, "#8b908b", 2);
-  wrap(
-    profile.quote ?? faction?.quote ?? "",
-    163,
-    274,
-    310,
-    16,
-    12,
-    "#3c413d",
-    2,
-  );
-  const av = images.avatar;
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(590, 110, 230, 230);
-  ctx.clip();
-  ctx.fillStyle = "#ededeb";
-  ctx.fillRect(590, 110, 230, 230);
-  if (av) {
-    drawCover(ctx, av, 590, 110, 230, 230);
-  } else {
-    ctx.fillStyle = "#c8cac6";
-    ctx.fillRect(610, 130, 190, 190);
-    text("此处头像", 650, 235, 24, "#626762", 500);
-  }
-  ctx.restore();
-  ctx.strokeStyle = "#171918";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(578, 119);
-  ctx.lineTo(578, 102);
-  ctx.lineTo(595, 102);
-  ctx.moveTo(815, 347);
-  ctx.lineTo(832, 347);
-  ctx.lineTo(832, 330);
-  ctx.stroke();
-  sectionTag(65, 330, "基础信息");
-  line(176, 348, 835, 348, "#171918", 1);
-  const row = (label, value, y) => {
-    text("▪", 68, y, 14, accent, 700);
-    text(label, 88, y, 13, "#6b706b", 500);
-    textFit(value || "—", 177, y, 13, 258, "#171918", 600);
-  };
-  row("性别", profile.gender, 382);
-  row("想扩列", (profile.contacts || []).join(" / "), 411);
-  row("所在区服", profile.server, 440);
-  row("当前资历", profile.seniority, 469);
-  row("游戏 UID", profile.uid, 498);
-  row("更侧重", (profile.focus || []).join(" / "), 527);
-  sectionTag(65, 560, "详细资料");
-  line(176, 578, 835, 578, "#171918", 1);
-  text("About me", 76, 603, 13, "#171918", 700, "DM Sans, sans-serif");
-  wrap(
-    profile.bio || "在这里写下关于博士的介绍。",
-    76,
-    628,
-    294,
-    19,
-    12,
-    "#444945",
-    4,
-  );
-  text("我推的角色 / CP / CB", 416, 603, 12, "#171918", 600);
-  line(416, 610, 820, 610, "#929792", 1);
-  wrap(profile.oshi || "写下你的喜爱", 416, 632, 400, 18, 12, "#454a46", 2);
-  operators.slice(0, 8).forEach((op, i) => {
-    const x = 416 + (i % 4) * 96,
-      y = 660 + Math.floor(i / 4) * 83;
+  ctx.fillRect(118, 200, 340, 34);
+  text("个人档案", 132, 227, 26, "#fff", 700);
+  text("PERSONAL PROFILE", 118, 253, 22, "#171918", 700);
+  text("档案编号 DATA NUMBER", 1374, 185, 14, "#929592", 400);
+  text(faction?.code || "B101", 1423, 228, 48, "#171918", 400);
+  line(...Object.values(LAYOUT.headerRule), "#171918", 7);
+  drawBarcode(ctx, profile.nickname, editing);
+
+  if (!editing) drawRichText(ctx, profile.richText?.nickname || [], { ...LAYOUT.nickname, fontSize: 80, color: "#171918", fontFamily: FONT, bold: true, singleLine: true });
+  text("Dr.", 203, 428, 156, "#171918", 400, "Arial, sans-serif");
+  text("Doctor", 200, 477, 39, "#171918", 700, "Arial, sans-serif");
+  if (images.logo?.complete && images.logo.naturalWidth) drawContain(ctx, logoMask(images.logo, faction?.logoOnDark), 120, 516, 166, 142);
+  else drawIslandMark(ctx, 120, 516, 166, 142, "#111");
+  if (!editing) drawRichText(ctx, profile.richText?.motto || [], { x: 292, y: 600, width: 520, height: 64, fontSize: 26, color: "#171918", fontFamily: FONT, singleLine: true });
+
+  drawPortrait(ctx, images.avatar, editing);
+  drawQr(ctx, images.qr1, LAYOUT.qr[0], profile.qrTypes?.[0] === "qq" ? "QQ" : "微信", editing && Number(profile.qrCount) >= 1);
+  drawQr(ctx, images.qr2, LAYOUT.qr[1], profile.qrTypes?.[1] === "wechat" ? "微信" : "QQ", editing && Number(profile.qrCount) >= 2);
+  drawCorners(ctx, LAYOUT.portrait);
+
+  sectionTag(ctx, 118, 747, "基础信息");
+  const basics = ["性　　别", "我　想　扩　列", "区　　服", "现 在 是", "更 侧 重"];
+  basics.forEach((label, i) => text(label, 145, LAYOUT.optionRows[i] + 14, 34, "#171918", 700));
+  for (let i = 0; i < 5; i++) text("▪", 122, LAYOUT.optionRows[i] + 14, 24, "#171918", 700);
+  if (!editing) drawOptions(ctx, profile);
+
+  sectionTag(ctx, 118, 1063, "详细资料");
+  text("About me◢", 132, 1124, 28, "#171918", 700);
+  text("关于氪金：", 118, 1174, 29, "#171918", 400);
+  text("我推的角色 /cp/cb", 735, 1174, 23, "#171918", 400);
+  line(735, 1184, 1115, 1184, "#777", 1.5);
+  if (!editing) drawRichText(ctx, profile.richText?.oshi || [], { ...LAYOUT.oshi, fontSize: 24, color: "#171918", fontFamily: FONT });
+
+  SLIDERS.forEach((slider, i) => drawSlider(ctx, slider, i, profile.sliders?.[slider.key] ?? slider.value, (profile.sliderTouched || []).includes(slider.key)));
+  if (editing) drawSliderPlaceholders(ctx);
+
+  const ops = operators.slice(0, 8);
+  ops.forEach((op, i) => {
+    const x = 742 + (i % 4) * 112;
+    const y = 1210 + Math.floor(i / 4) * 112;
     const img = images.operators?.get(op.id);
-    ctx.fillStyle = "#eceeeb";
-    ctx.fillRect(x, y, 68, 68);
-    if (img?.complete && img.naturalWidth) drawCover(ctx, img, x, y, 68, 68);
-    else {
-      textFit(op.name, x + 4, y + 37, 11, 60, "#444", 500);
-    }
-    textFit(op.name, x, y + 80, 9, 68, "#555b56", 400);
+    ctx.fillStyle = "#eee"; ctx.fillRect(x, y, 96, 92);
+    if (img?.complete && img.naturalWidth) drawCover(ctx, img, x, y, 96, 92);
+    text(String(op.name || "").slice(0, 8), x, y + 108, 15, "#252825", 500);
   });
-  const sliderLabels = {
-    spending: ["0氪", "微氪", "重氪"],
-    goods: ["不太吃", "理性吃", "为爱买单"],
-    story: ["剧情跳过", "感兴趣会看", "剧情党"],
-    tone: ["温馨日常", "均衡", "宏大悲壮"],
-    meta: ["XP", "均衡", "强度"],
-    shipping: ["CB", "均衡", "CP"],
-    roguelike: ["几乎不碰", "为了奖励打", "深度沉迷"],
-  };
-  const sliderKeys = [
-    "spending",
-    "goods",
-    "story",
-    "tone",
-    "meta",
-    "shipping",
-    "roguelike",
-  ];
-  const sliderY = 708;
-  sliderKeys.forEach((key, i) => {
-    const y = sliderY + i * 60;
-    const titles = [
-      "氪金倾向",
-      "吃谷习惯",
-      "剧情习惯",
-      "剧情偏好",
-      "培养取向",
-      "关系偏好",
-      "集成战略",
-    ];
-    text(titles[i], 76, y, 11, "#262b27", 600);
-    const x1 = 77,
-      x2 = 350,
-      yy = y + 17;
-    line(x1, yy, x2, yy, "#414642", 2);
-    [0, 0.5, 1].forEach((v) => {
-      const x = x1 + (x2 - x1) * v;
-      line(x, yy - 4, x, yy + 5, "#414642", 1);
-    });
-    const val =
-      Math.max(0, Math.min(100, Number(profile.sliders?.[key] ?? 50))) / 100;
-    ctx.fillStyle = accent;
-    ctx.beginPath();
-    ctx.arc(x1 + (x2 - x1) * val, yy, 6, 0, Math.PI * 2);
-    ctx.fill();
-    const labels = sliderLabels[key];
-    text(labels[0], x1, y + 36, 9, "#737973");
-    text(
-      labels[2],
-      x2 - ctx.measureText(labels[2]).width,
-      y + 36,
-      9,
-      "#737973",
-    );
-  });
-  // Right-side detail rail and contact codes.
-  line(390, 590, 390, 1164, "#d9dbd7", 1);
-  text("CONTACT", 416, 840, 9, "#898e89", 400, "DM Mono, monospace");
-  const qrBlocks = [
-    ["微信", images.qrWechat],
-    ["QQ", images.qrQq],
-  ];
-  qrBlocks.forEach(([label, img], i) => {
-    const x = 416 + i * 185,
-      y = 860;
-    ctx.fillStyle = "#f2f3f1";
-    ctx.fillRect(x, y, 150, 150);
-    if (img) drawContain(ctx, img, x + 5, y + 5, 140, 140);
-    else {
-      text("二维码", x + 48, y + 81, 12, "#9da19d", 500);
-    }
-    text(label, x, y + 168, 10, "#505650", 500);
-  });
-  sectionTag(416, 1061, "补充");
-  wrap(profile.extra || "—", 416, 1088, 400, 18, 11, "#434843", 4);
-  if (faction?.logo) {
-    const img = images.logo;
-    if (img?.complete && img.naturalWidth) {
-      ctx.globalAlpha = 0.12;
-      drawContain(ctx, logoMask(img, faction?.logoOnDark), 570, 1040, 240, 190);
-      ctx.globalAlpha = 1;
-    }
+  sectionTag(ctx, 735, 1632, "补充", 220, 393);
+  if (!editing) drawRichText(ctx, profile.richText?.extra || [], { ...LAYOUT.extra, fontSize: 24, color: "#171918", fontFamily: FONT, lineHeight: 1.35 });
+  if (images.logo?.complete && images.logo.naturalWidth) { ctx.save(); ctx.globalAlpha = 0.16; drawContain(ctx, logoMask(images.logo, faction?.logoOnDark), LAYOUT.insignia.x, LAYOUT.insignia.y, LAYOUT.insignia.width, LAYOUT.insignia.height); ctx.restore(); }
+  else { ctx.save(); ctx.globalAlpha = 0.16; drawIslandMark(ctx, LAYOUT.insignia.x, LAYOUT.insignia.y, LAYOUT.insignia.width, LAYOUT.insignia.height, "#171918"); ctx.restore(); }
+  text("鹰角网络素材由其权利人所有", 1108, 2075, 13, "#888", 400);
+
+  line(...Object.values(LAYOUT.footerRule), "#171918", 8);
+  if (!editing) {
+    ctx.save(); ctx.setLineDash([9, 8]); ctx.strokeStyle = "#777"; ctx.lineWidth = 2;
+    ctx.strokeRect(LAYOUT.signature.x, LAYOUT.signature.y - 32, LAYOUT.signature.width, LAYOUT.signature.height);
+    ctx.restore();
+    text("原作 Sayoko.　暝行镌无创建表单化", 132, 2200, 20, "#555", 400);
+    text("创建我自己的 → tiny.leisiyu.dev", 132, 2232, 20, "#555", 400);
   }
-  line(65, 1190, 835, 1190, "#171918", 3);
-  text("原作 Sayoko.  ·  非官方非商业同人作品", 65, 1220, 10, "#666c67", 400);
-  text("素材：鹰角网络 / PRTS", 65, 1243, 9, "#858a85", 400);
-  wrap(
-    profile.quote ?? faction?.quote ?? "",
-    467,
-    1210,
-    355,
-    14,
-    11,
-    "#373c38",
-    3,
-  );
+  if (!editing) drawRichText(ctx, profile.richText?.quote || [], { ...LAYOUT.bottomQuote, fontSize: 21, color: "#171918", fontFamily: FONT, lineHeight: 1.3 });
+  drawHatching(ctx, 1095, 2230, 380, 70);
   ctx.restore();
-  function sectionTag(x, y, label) {
-    ctx.fillStyle = "#171918";
-    ctx.fillRect(x, y - 17, 106, 22);
-    text(label, x + 8, y, 12, "#fff", 700);
-  }
-  function textFit(
-    value,
-    x,
-    y,
-    size,
-    maxWidth,
-    color = "#171918",
-    weight = 400,
-  ) {
-    let fitted = size;
-    ctx.font = `${weight} ${fitted}px Noto Sans SC, sans-serif`;
-    while (
-      ctx.measureText(String(value || "")).width > maxWidth &&
-      fitted > 8
-    ) {
-      fitted--;
-      ctx.font = `${weight} ${fitted}px Noto Sans SC, sans-serif`;
-    }
-    ctx.fillStyle = color;
-    ctx.fillText(String(value || ""), x, y, maxWidth);
-  }
 }
 
-export function drawCover(ctx, image, x, y, w, h) {
-  const ratio = Math.max(w / image.width, h / image.height),
-    dw = image.width * ratio,
-    dh = image.height * ratio;
-  ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+function drawBarcode(ctx, nickname, editing) {
+  const x = LAYOUT.barcode.x, y = LAYOUT.barcode.y, w = LAYOUT.barcode.width, h = LAYOUT.barcode.height;
+  const value = nickname ? [...new TextEncoder().encode(nickname)].map(byte => byte.toString(16).padStart(2, "0").toUpperCase()).join("") : "DOCTOR";
+  try {
+    if (!globalThis.JsBarcode) return;
+    const barcode = document.createElement("canvas");
+    globalThis.JsBarcode(barcode, value, { format: "CODE128", width: 2, height: h, displayValue: false, margin: 0, background: "#fff", lineColor: "#111" });
+    ctx.fillStyle = "#fff"; ctx.fillRect(x, y, w, h);
+    ctx.drawImage(barcode, x, y, w, h);
+  } catch { }
 }
-export function drawContain(ctx, image, x, y, w, h) {
-  const ratio = Math.min(w / image.width, h / image.height),
-    dw = image.width * ratio,
-    dh = image.height * ratio,
-    smoothing = ctx.imageSmoothingEnabled;
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
-  ctx.imageSmoothingEnabled = smoothing;
+function sectionTag(ctx, x, y, label, tagWidth = 220, lineWidth = 540) { ctx.fillStyle = "#171918"; ctx.beginPath(); ctx.roundRect(x, y, tagWidth, 33, 4); ctx.fill(); ctx.fillRect(x + tagWidth, y + 33, lineWidth, 2); ctx.font = `700 28px ${FONT}`; ctx.fillStyle = "#fff"; ctx.fillText(label, x + 13, y + 27); }
+function drawCorners(ctx, r) { ctx.save(); ctx.strokeStyle = "#171918"; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(r.x - 20, r.y + 95); ctx.lineTo(r.x - 20, r.y - 20); ctx.lineTo(r.x + 95, r.y - 20); ctx.moveTo(r.x + r.width - 95, r.y + r.height + 20); ctx.lineTo(r.x + r.width + 20, r.y + r.height + 20); ctx.lineTo(r.x + r.width + 20, r.y + r.height - 95); ctx.stroke(); ctx.restore(); }
+function drawPortrait(ctx, image, editing) { const r = LAYOUT.portrait; if (image) drawCover(ctx, image, r.x, r.y, r.width, r.height); else if (editing) { ctx.fillStyle = "#eee"; ctx.fillRect(r.x, r.y, r.width, r.height); ctx.fillStyle = "#171918"; ctx.font = `700 70px ${FONT}`; ctx.textAlign = "center"; ctx.fillText("此处", r.x + r.width / 2, r.y + 136); ctx.fillText("头像", r.x + r.width / 2, r.y + 244); ctx.textAlign = "left"; } }
+function drawQr(ctx, image, r, label, placeholder) { if (image) drawContain(ctx, image, r.x, r.y, r.width, r.height); else if (placeholder) { ctx.fillStyle = "#f4f4f4"; ctx.fillRect(r.x, r.y, r.width, r.height); ctx.fillStyle = "#a4a4a4"; ctx.font = `500 27px ${FONT}`; ctx.textAlign = "center"; ctx.fillText(`${label}二维码`, r.x + r.width / 2, r.y + r.height / 2); ctx.textAlign = "left"; } }
+const TRACK_YS = [1220, 1352, 1477, 1631, 1768, 1915, 2057];
+const TRACK_XS = [122, 123, 123, 120, 117, 121, 121];
+function drawSlider(ctx, item, i, value, touched) { const x = TRACK_XS[i], width = 378, trackY = TRACK_YS[i]; ctx.font = `400 28px ${FONT}`; ctx.fillStyle = "#171918"; ctx.fillText(item.title, x, trackY - 48); ctx.strokeStyle = "#222"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x, trackY); ctx.lineTo(x + width, trackY); ctx.moveTo(x, trackY); ctx.lineTo(x, trackY - 17); ctx.moveTo(x + width, trackY); ctx.lineTo(x + width, trackY - 17); ctx.moveTo(x + width / 2, trackY); ctx.lineTo(x + width / 2, trackY - 15); ctx.stroke(); if (touched) { const ratio = Math.max(0, Math.min(100, Number(value))) / 100; ctx.fillStyle = "#61b9e6"; ctx.beginPath(); ctx.arc(x + width * ratio, trackY, 11, 0, Math.PI * 2); ctx.fill(); } ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "left"; ctx.fillText(item.left, x - 14, trackY + 42); ctx.textAlign = "right"; ctx.fillText(item.right, x + width + 10, trackY + 42); ctx.textAlign = "left"; }
+function drawSliderPlaceholders(ctx) { SLIDERS.forEach((item, i) => { if (!item.mid) return; ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "center"; ctx.fillText(item.mid, TRACK_XS[i] + 189, TRACK_YS[i] + 42); ctx.textAlign = "left"; }); }
+function drawOptions(ctx, profile) {
+  const groups = { gender: OPTIONS.gender, contact: OPTIONS.contact, server: OPTIONS.server, seniority: OPTIONS.seniority, focus: OPTIONS.focus };
+  const selected = { gender: profile.gender ? [profile.gender] : [], contact: profile.contacts || [], server: profile.server || [], seniority: profile.seniority || [], focus: profile.focus || [] };
+  const geometry = { gender: [304, 784, [83, 83, 108]], contact: [304, 838, [108, 83, 185]], server: [304, 891, [58, 54, 86, 54, 54, 54]], seniority: [304, 944, [82, 82, 82, 172]], focus: [304, 997, [173, 119, 83, 57, 83, 83]] };
+  for (const [group, items] of Object.entries(groups)) {
+    const [startX, y, widths] = geometry[group]; let x = startX;
+    items.forEach((value, index) => {
+      const width = widths[index];
+      if (selected[group].includes(value)) drawMarker(ctx, x, y + 2, width - 4, 34, "#62c5ed", profile.markerSeeds?.[`${group}:${value}`] || 1);
+      ctx.font = `700 ${group === "focus" ? 26 : 29}px ${FONT}`; ctx.fillStyle = "#171918"; ctx.fillText(value + (index < items.length - 1 ? "/" : ""), x + 4, y + 31);
+      x += width;
+    });
+  }
 }
-export function imageFromFile(file) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("图片无法读取，请选择有效的图片文件。"));
-    };
-    image.src = url;
-  });
-}
+function drawHatching(ctx, x, y, width, height) { ctx.save(); ctx.strokeStyle = "#171918"; ctx.lineWidth = 2; for (let row = 0; row < 4; row++) { for (let col = 0; col < width - 20; col += 28) { const xx = x + col, yy = y + row * 18; ctx.beginPath(); ctx.moveTo(xx, yy + 12); ctx.lineTo(xx + 12, yy - 7); ctx.stroke(); } } ctx.restore(); }
+function logoMask(image, onDark) { if (logoMasks.has(image)) return logoMasks.get(image); const mask = document.createElement("canvas"); mask.width = image.naturalWidth; mask.height = image.naturalHeight; const context = mask.getContext("2d"); context.drawImage(image, 0, 0); if (onDark) { const pixels = context.getImageData(0, 0, mask.width, mask.height); for (let i = 0; i < pixels.data.length; i += 4) pixels.data[i + 3] *= (pixels.data[i] + pixels.data[i + 1] + pixels.data[i + 2]) / 765; context.putImageData(pixels, 0, 0); } context.globalCompositeOperation = "source-in"; context.fillStyle = "#171918"; context.fillRect(0, 0, mask.width, mask.height); logoMasks.set(image, mask); return mask; }
+function drawIslandMark(ctx, x, y, width, height, color) { ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x + width / 2, y); ctx.lineTo(x + width, y + height); ctx.lineTo(x, y + height); ctx.closePath(); ctx.fill(); ctx.globalCompositeOperation = "destination-out"; ctx.fillRect(x + width * .42, y + height * .38, width * .16, height * .43); ctx.globalCompositeOperation = "source-over"; ctx.fillStyle = color === "#111" ? "#fff" : "#fff"; ctx.font = `700 ${Math.max(13, width * .09)}px ${FONT}`; ctx.textAlign = "center"; ctx.fillText("RHODES ISLAND", x + width / 2, y + height * .91); ctx.textAlign = "left"; ctx.restore(); }
+export function createSliderControls(container, onChange) { container.innerHTML = SLIDERS.map(item => `<input type="range" min="0" max="100" step="1" name="${item.key}" value="${item.value}" aria-label="${item.title}">`).join(""); container.addEventListener("input", onChange); return SLIDERS; }
+export function drawCover(ctx, image, x, y, w, h) { const ratio = Math.max(w / image.width, h / image.height), dw = image.width * ratio, dh = image.height * ratio; ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); ctx.restore(); }
+export function drawContain(ctx, image, x, y, w, h) { const ratio = Math.min(w / image.width, h / image.height), dw = image.width * ratio, dh = image.height * ratio; ctx.imageSmoothingEnabled = false; ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); ctx.imageSmoothingEnabled = true; }
+export function imageFromFile(file) { return new Promise((resolve, reject) => { const url = URL.createObjectURL(file), image = new Image(); image.onload = () => { URL.revokeObjectURL(url); resolve(image); }; image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("图片无法读取，请选择有效的图片文件。")); }; image.src = url; }); }

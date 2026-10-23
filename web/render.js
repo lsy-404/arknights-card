@@ -75,7 +75,6 @@ export function drawProfile(
 ) {
   const ctx = canvas.getContext("2d");
   const w = canvas.width;
-  const h = canvas.height;
   const scale = w / 900;
   ctx.save();
   ctx.scale(scale, scale);
@@ -180,9 +179,7 @@ export function drawProfile(
   wrap(faction?.name || "RHODES ISLAND", 163, 224, 280, 20, 14, "#2c302d", 2);
   wrap(faction?.en || "PERSONAL PROFILE", 163, 249, 280, 17, 10, "#8b908b", 2);
   wrap(
-    profile.quote ||
-      faction?.quote ||
-      "Bitter forces may have wholesome results",
+    profile.quote ?? faction?.quote ?? "",
     163,
     274,
     310,
@@ -343,17 +340,16 @@ export function drawProfile(
   line(65, 1190, 835, 1190, "#171918", 3);
   text("原作 Sayoko.  ·  非官方非商业同人作品", 65, 1220, 10, "#666c67", 400);
   text("素材：鹰角网络 / PRTS", 65, 1243, 9, "#858a85", 400);
-  textFit(
-    profile.quote || faction?.quote || "THE LAST STAND AGAINST THE ORIGINIUM.",
+  wrap(
+    profile.quote ?? faction?.quote ?? "",
     467,
-    1220,
-    11,
+    1210,
     355,
+    14,
+    11,
     "#373c38",
-    500,
+    3,
   );
-  for (let i = 0; i < 12; i++)
-    line(705 + i * 10, 1237, 695 + i * 10, 1262, "#a0a49f", 1);
   ctx.restore();
   function sectionTag(x, y, label) {
     ctx.fillStyle = "#171918";
@@ -379,7 +375,7 @@ export function drawProfile(
       ctx.font = `${weight} ${fitted}px Noto Sans SC, sans-serif`;
     }
     ctx.fillStyle = color;
-    ctx.fillText(String(value || ""), x, y);
+    ctx.fillText(String(value || ""), x, y, maxWidth);
   }
 }
 

@@ -95,7 +95,7 @@ $("#quote-input").addEventListener("input", () => {
 $("#default-quote").addEventListener("click", () => {
   quoteCustom = false;
   $("#quote-input").value = faction.quote || "";
-  $("#quote-state").textContent = "阵营语录";
+  $("#quote-state").textContent = "阵营预设";
   render();
 });
 chooseFaction(faction.id);

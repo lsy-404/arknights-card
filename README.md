@@ -18,7 +18,9 @@
 
 ## 本地运行
 
-安装 Node.js 22 或更新版本后运行 `npm run preview`，打开终端显示的网址。无需安装运行依赖。测试使用 `npm test`；测试相关工具及夹具位于 `test/`。
+安装 Node.js 22 或更新版本后运行 `npm run preview`，打开终端显示的网址。无需安装运行依赖。
+
+开发验证先运行 `npm ci` 和 `npx playwright install chromium`，再运行 `npm test`。测试与截图夹具位于 `test/`。
 
 ## 许可
 

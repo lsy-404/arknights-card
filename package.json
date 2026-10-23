@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.mjs && node test/qr.browser.test.cjs",
+    "test": "node --test test/*.test.js && node test/qr.browser.test.cjs",
     "preview": "node test/server.mjs",
-    "test:unit": "node --test test/*.test.mjs",
+    "test:unit": "node --test test/*.test.js",
     "test:browser": "node test/qr.browser.test.cjs"
   },
   "engines": {

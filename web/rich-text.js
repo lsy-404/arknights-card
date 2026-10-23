@@ -37,7 +37,7 @@ function loadQuill() {
       const script = document.createElement('script');
       script.src = new URL('./vendor/quill.js', import.meta.url);
       script.onload = () => resolve(window.Quill);
-      script.onerror = () => reject(new Error('无法加载本地富文本编辑器'));
+      script.onerror = () => reject(new Error('编辑器暂不可用，请刷新后重试。'));
       document.head.append(script);
     });
   }

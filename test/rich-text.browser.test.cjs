@@ -48,6 +48,11 @@ const server = http.createServer((request, response) => {
       const calibration = await createRichText(calibrationNode, {
         initialText: 'Ag中\nNy華', defaultSize: 28, maxLength: 100,
       });
+      const oversizedNode = document.createElement('div');
+      oversizedNode.id = 'rich-text-oversized';
+      oversizedNode.style.cssText = 'width:640px;height:64px;background:white';
+      document.body.append(oversizedNode);
+      const oversized = await createRichText(oversizedNode, { initialText: 'Alpha', defaultSize: 28 });
       const sizeSelect = toolbar.querySelector('[aria-label="字号"]');
       const colorInput = toolbar.querySelector('[aria-label="文字颜色"]');
 
@@ -77,7 +82,7 @@ const server = http.createServer((request, response) => {
         await new Promise((resolve) => requestAnimationFrame(resolve));
       };
 
-      window.richTextTest = { toolbar, firstNode, first, secondNode, second, calibrationNode, calibration, selectText };
+      window.richTextTest = { toolbar, firstNode, first, secondNode, second, calibrationNode, calibration, oversizedNode, oversized, selectText };
       sizeSelect.addEventListener('mousedown', (event) => { window.richTextTest.sizeMouseDownPrevented = event.defaultPrevented; });
       colorInput.addEventListener('mousedown', (event) => { window.richTextTest.colorMouseDownPrevented = event.defaultPrevented; });
       const pasted = document.createElement('div');
@@ -120,6 +125,9 @@ const server = http.createServer((request, response) => {
         mouseDownPrevented: window.richTextTest.colorMouseDownPrevented,
       };
     });
+    await page.locator('#rich-text-test-toolbar [aria-label="下划线"]').click();
+    await page.locator('#rich-text-test-toolbar [aria-label="删除线"]').click();
+    result.formattedBeforeClear = await page.evaluate(() => window.richTextTest.first.getRuns());
 
     result.clearRuns = await page.evaluate(async () => {
       const refs = window.richTextTest;
@@ -165,13 +173,28 @@ const server = http.createServer((request, response) => {
       drawRichText(context, runs, {
         x: 0, y: 0, width: canvas.width, height: canvas.height, fontSize: 28,
       });
+      await refs.selectText(refs.oversizedNode.querySelector('.ql-editor'), 0, 5);
+      toolbarSize.value = '200px';
+      toolbarSize.dispatchEvent(new Event('change', { bubbles: true }));
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const oversizedRuns = refs.oversized.getRuns();
+      const oversizedCanvas = document.createElement('canvas');
+      oversizedCanvas.width = 640;
+      oversizedCanvas.height = 64;
+      const oversizedContext = oversizedCanvas.getContext('2d');
+      oversizedContext.fillStyle = '#ffffff';
+      oversizedContext.fillRect(0, 0, oversizedCanvas.width, oversizedCanvas.height);
+      drawRichText(oversizedContext, oversizedRuns, {
+        x: 0, y: 0, width: oversizedCanvas.width, height: oversizedCanvas.height, fontSize: 28,
+      });
       document.activeElement.blur();
       getSelection().removeAllRanges();
-      return { runs, canvas: canvas.toDataURL('image/png') };
+      return { runs, canvas: canvas.toDataURL('image/png'), oversizedCanvas: oversizedCanvas.toDataURL('image/png') };
     });
     const editorPixels = await page.locator('#rich-text-calibration .ql-editor').screenshot();
     result.pixelComparison.dom = editorPixels.toString('base64');
-    result.pixelComparison.boxes = await page.evaluate(async ({ dom, canvas }) => {
+    result.pixelComparison.oversizedDom = (await page.locator('#rich-text-oversized .ql-editor').screenshot()).toString('base64');
+    result.pixelComparison.boxes = await page.evaluate(async ({ dom, canvas, domOversized, canvasOversized }) => {
       const pixels = async (source) => {
         const image = new Image();
         image.src = source.startsWith('data:') ? source : `data:image/png;base64,${source}`;
@@ -201,10 +224,18 @@ const server = http.createServer((request, response) => {
         }
         return boxes;
       };
-      return { dom: await pixels(dom), canvas: await pixels(canvas) };
-    }, { dom: result.pixelComparison.dom, canvas: result.pixelComparison.canvas });
+      return {
+        dom: await pixels(dom), canvas: await pixels(canvas),
+        oversizedDom: await pixels(domOversized), oversizedCanvas: await pixels(canvasOversized),
+      };
+    }, {
+      dom: result.pixelComparison.dom, canvas: result.pixelComparison.canvas,
+      domOversized: result.pixelComparison.oversizedDom, canvasOversized: result.pixelComparison.oversizedCanvas,
+    });
     delete result.pixelComparison.dom;
     delete result.pixelComparison.canvas;
+    delete result.pixelComparison.oversizedDom;
+    delete result.pixelComparison.oversizedCanvas;
 
     await page.evaluate(async () => navigator.clipboard.write([
       new ClipboardItem({
@@ -226,6 +257,9 @@ const server = http.createServer((request, response) => {
     if (!result.sizeRuns.some((run) => run.text === 'alp' && run.size === 32)) throw new Error(`Size selection was lost: ${JSON.stringify(result)}`);
     if (result.selectedSize !== '32px' || result.boldPressed !== 'true') throw new Error(`Toolbar state did not follow the active selection: ${JSON.stringify(result)}`);
     if (result.sizeMouseDownPrevented || result.colorRuns.mouseDownPrevented) throw new Error(`Native toolbar controls had their mousedown canceled: ${JSON.stringify(result)}`);
+    if (!result.formattedBeforeClear.some((run) => run.text === 'alp' && run.bold && run.underline && run.strike && run.size === 32 && run.color === '#336699')) {
+      throw new Error(`Formatting controls failed before the clear-format test: ${JSON.stringify(result.formattedBeforeClear)}`);
+    }
     if (result.clearRuns.some((run) => run.bold || run.underline || run.strike || run.size || run.color)) throw new Error(`Clear formatting failed: ${JSON.stringify(result)}`);
     if (!result.crossFieldRuns.runs.some((run) => run.text === 'be' && run.underline)) throw new Error(`Toolbar did not target the second field: ${JSON.stringify(result)}`);
     if (result.crossFieldRuns.toolbar.underline !== 'true' || result.crossFieldRuns.toolbar.size !== '28px') throw new Error(`Toolbar state did not follow the second field: ${JSON.stringify(result.crossFieldRuns)}`);
@@ -236,6 +270,10 @@ const server = http.createServer((request, response) => {
     ]);
     const maxPixelError = Math.max(...pixelErrors);
     if (maxPixelError > 2) throw new Error(`DOM/Canvas glyph bounds differ by ${maxPixelError}px: ${JSON.stringify(result.pixelComparison)}`);
+    if (!result.pixelComparison.boxes.oversizedDom.some((box) => box.bottom >= 50) ||
+      !result.pixelComparison.boxes.oversizedCanvas.some((box) => box.bottom >= 50)) {
+      throw new Error(`Oversized text disappeared instead of clipping at the editor edge: ${JSON.stringify(result.pixelComparison.boxes)}`);
+    }
     if (pasteResult.injected || /javascript:|<script|<img|onerror/i.test(pasteResult.pastedHtml)) throw new Error(`Paste retained unsafe HTML: ${JSON.stringify(pasteResult)}`);
     if (!pasteResult.pastedText.includes('safe')) throw new Error(`Plain text was lost during paste: ${JSON.stringify(pasteResult)}`);
     if (result.getText !== 'alpha') throw new Error(`Text API mismatch: ${JSON.stringify(result)}`);

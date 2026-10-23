@@ -102,6 +102,44 @@ async function exportPng(page) {
     await page.locator('#export-scale').selectOption('1');
 
     const nickname = page.locator('#field-nickname .ql-editor');
+    const toolbarSize = page.locator('#richtext-toolbar [aria-label="字号"]');
+    const boldButton = page.locator('#richtext-toolbar [aria-label="粗体"]');
+    await nickname.click();
+    const nicknameDefaultLabel = await toolbarSize.locator('option:checked').innerText();
+    if (await toolbarSize.inputValue() !== '' || nicknameDefaultLabel !== '默认 · 132') {
+      failures.push(`Unformatted nickname should expose the 132px default option: ${nicknameDefaultLabel}`);
+    }
+    await nickname.fill('Font Test');
+    await nickname.press('Control+A');
+    const regularNickname = await pngMetrics(page, await exportPng(page));
+    await boldButton.click();
+    const boldNickname = await pngMetrics(page, await exportPng(page));
+    if (await boldButton.getAttribute('aria-pressed') !== 'true' || regularNickname.nickname.bits === boldNickname.nickname.bits) {
+      failures.push('Toggling nickname bold on must visibly change the exported glyph pixels.');
+    }
+    await boldButton.click();
+    const restoredWeight = await pngMetrics(page, await exportPng(page));
+    if (await boldButton.getAttribute('aria-pressed') !== 'false' || regularNickname.nickname.bits !== restoredWeight.nickname.bits) {
+      failures.push('Toggling nickname bold off must restore the original exported glyph pixels.');
+    }
+    await nickname.press('Control+A');
+    await toolbarSize.selectOption('120px');
+    const explicitSize = await toolbarSize.inputValue();
+    const explicitSizePixels = await pngMetrics(page, await exportPng(page));
+    if (explicitSize !== '120px' || regularNickname.nickname.bits === explicitSizePixels.nickname.bits) {
+      failures.push(`Selecting 120px should change the selected nickname's exported glyph pixels: ${explicitSize}`);
+    }
+    await nickname.press('Control+A');
+    await page.locator('#richtext-toolbar [aria-label="清除格式"]').click();
+    await nickname.press('Control+A');
+    const restoredDefaultLabel = await toolbarSize.locator('option:checked').innerText();
+    if (await toolbarSize.inputValue() !== '' || restoredDefaultLabel !== '默认 · 132') {
+      failures.push(`Clearing explicit nickname formatting should restore the 132px default option: ${restoredDefaultLabel}`);
+    }
+    const restoredSize = await pngMetrics(page, await exportPng(page));
+    if (regularNickname.nickname.bits !== restoredSize.nickname.bits) {
+      failures.push('Clearing explicit nickname size should restore the default-size Canvas pixels.');
+    }
     await nickname.fill('Alpha');
     const alpha = await pngMetrics(page, await exportPng(page));
     await nickname.fill('Beta');
@@ -171,6 +209,19 @@ async function exportPng(page) {
         failures.push(`Faction text did not retain the full defaults: ${faction.id} ${JSON.stringify(factionText)}`);
       }
       if (!factionText.fits) failures.push(`Faction text is clipped in its editor: ${faction.id}`);
+      const quoteDefaultSize = await page.evaluate(async (quote) => {
+        const { quoteLayout } = await import('/web/layout.js');
+        const { FONT } = await import('/web/typography.js');
+        return quoteLayout(quote, document.createElement('canvas').getContext('2d'), FONT).fontSize;
+      }, faction.quote);
+      await page.locator('#field-quote .ql-editor').click();
+      await page.locator('#field-quote .ql-editor').press('Control+A');
+      const quoteSizeSelect = page.locator('#richtext-toolbar [aria-label="字号"]');
+      const selectedQuoteSize = await quoteSizeSelect.inputValue();
+      const quoteDefaultLabel = await quoteSizeSelect.locator('option:checked').innerText();
+      if (selectedQuoteSize !== '' || quoteDefaultLabel !== `默认 · ${quoteDefaultSize}`) {
+        failures.push(`Dynamic quote default size did not update the toolbar for ${faction.id}: expected 默认 · ${quoteDefaultSize}, got ${quoteDefaultLabel}`);
+      }
     }
 
     await page.locator('#operator-open').click();

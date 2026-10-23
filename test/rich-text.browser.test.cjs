@@ -104,10 +104,7 @@ const server = http.createServer((request, response) => {
     await page.locator('#rich-text-test-toolbar [aria-label="粗体"]').click();
     result.boldRuns = await page.evaluate(() => window.richTextTest.first.getRuns());
     const sizeSelect = page.locator('#rich-text-test-toolbar [aria-label="字号"]');
-    await sizeSelect.click();
-    await page.keyboard.press('Alt+ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await sizeSelect.selectOption('32px');
     result.sizeRuns = await page.evaluate(() => window.richTextTest.first.getRuns());
     result.selectedSize = await sizeSelect.inputValue();
     result.boldPressed = await page.locator('#rich-text-test-toolbar [aria-label="粗体"]').getAttribute('aria-pressed');
@@ -145,6 +142,7 @@ const server = http.createServer((request, response) => {
         toolbar: {
           underline: refs.toolbar.querySelector('[aria-label="下划线"]').getAttribute('aria-pressed'),
           size: refs.toolbar.querySelector('[aria-label="字号"]').value,
+          defaultSize: refs.toolbar.querySelector('[aria-label="字号"]').selectedOptions[0].textContent,
           color: refs.toolbar.querySelector('[aria-label="文字颜色"]').value,
         },
       };
@@ -264,7 +262,7 @@ const server = http.createServer((request, response) => {
     }
     if (result.clearRuns.some((run) => run.bold || run.underline || run.strike || run.size || run.color)) throw new Error(`Clear formatting failed: ${JSON.stringify(result)}`);
     if (!result.crossFieldRuns.runs.some((run) => run.text === 'be' && run.underline)) throw new Error(`Toolbar did not target the second field: ${JSON.stringify(result)}`);
-    if (result.crossFieldRuns.toolbar.underline !== 'true' || result.crossFieldRuns.toolbar.size !== '28px') throw new Error(`Toolbar state did not follow the second field: ${JSON.stringify(result.crossFieldRuns)}`);
+    if (result.crossFieldRuns.toolbar.underline !== 'true' || result.crossFieldRuns.toolbar.size !== '' || result.crossFieldRuns.toolbar.defaultSize !== '默认 · 28') throw new Error(`Toolbar state did not follow the second field: ${JSON.stringify(result.crossFieldRuns)}`);
     if (result.pixelComparison.boxes.dom.length !== 2 || result.pixelComparison.boxes.canvas.length !== 2) throw new Error(`Unexpected DOM/Canvas text pixel rows: ${JSON.stringify(result.pixelComparison)}`);
     const pixelErrors = result.pixelComparison.boxes.dom.flatMap((box, index) => [
       Math.abs(box.top - result.pixelComparison.boxes.canvas[index].top),

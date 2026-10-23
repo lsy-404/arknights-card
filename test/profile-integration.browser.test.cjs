@@ -66,7 +66,7 @@ async function pngMetrics(page, png) {
         Math.max(r, g, b) - Math.min(r, g, b) > 18 || Math.abs(r - 238) > 12 || Math.abs(g - 238) > 12 || Math.abs(b - 238) > 12),
       emptyCode: box({ x: 1400, y: 194, width: 112, height: 44 }, isDark),
       choiceMarker: box({ x: 280, y: 770, width: 140, height: 65 }, (r, g, b) => b > r + 24 && g > r + 12 && b > 180),
-      choiceText: box({ x: 290, y: 780, width: 115, height: 60 }, isDark),
+      choiceText: box({ x: 380, y: 805, width: 48, height: 43 }, isDark),
     };
   }, png.toString('base64'));
 }
@@ -139,7 +139,7 @@ async function exportPng(page) {
       const dark = (r, g, b) => r < 128 && g < 128 && b < 128;
       return {
         marker: bounds({ x: 280, y: 770, width: 140, height: 65 }, marker),
-        text: bounds({ x: 290, y: 780, width: 115, height: 60 }, dark),
+        text: bounds({ x: 380, y: 805, width: 48, height: 43 }, dark),
       };
     }, sheetShot.toString('base64'));
     const close = (a, b, tolerance) => a && b && Math.abs(a - b) <= tolerance;

@@ -57,3 +57,13 @@ test('single-line text keeps run styles and reports clipping overflow', () => {
   ]);
   assert.equal(result.overflow, true);
 });
+
+test('partially visible oversized lines are drawn and clipped instead of disappearing', () => {
+  const { ctx, calls } = makeContext();
+  const result = drawRichText(ctx, [{ text: 'Big', size: 200 }], {
+    x: 0, y: 0, width: 400, height: 50, fontSize: 28, singleLine: true,
+  });
+
+  assert.ok(calls.some(([name, text]) => name === 'fillText' && text === 'Big'));
+  assert.equal(result.overflow, true);
+});

@@ -91,7 +91,7 @@ export function drawRichText(ctx, runs, {
 
     for (const line of lines) {
       const lineStep = line.ascent + line.descent;
-      if (drawY + lineStep > y + height) {
+      if (drawY >= y + height) {
         overflow = true;
         break;
       }
@@ -119,10 +119,11 @@ export function drawRichText(ctx, runs, {
         }
         drawX += part.width;
       }
+      if (drawY + lineStep > y + height) overflow = true;
       drawY += lineStep;
       drawnHeight += lineStep;
       if (singleLine) {
-        overflow = lines.length > 1 || line.width > width;
+        overflow ||= lines.length > 1 || line.width > width;
         break;
       }
     }

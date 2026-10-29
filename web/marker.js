@@ -24,12 +24,12 @@ export function markerStyle(seed = 1) {
     state = (1664525 * state + 1013904223) >>> 0;
     return state / 4294967296;
   };
-  const tilt = (random() - 0.5) * 0.065;
+  const tilt = (random() - 0.5) * 0.024;
   const opacity = 0.48 + random() * 0.14;
-  const points = [[0, 10 + random() * 9]];
-  for (let i = 1; i < 7; i++) points.push([i * 14.285, 9 + random() * 12]);
-  points.push([100, 10 + random() * 9]);
-  for (let i = 6; i >= 1; i--) points.push([i * 14.285, 83 + random() * 12]);
-  points.push([0, 82 + random() * 12]);
+  const points = [[0, 3 + random() * 6]];
+  for (let i = 1; i < 7; i++) points.push([i * 14.285, 2 + random() * 7]);
+  points.push([100, 3 + random() * 6]);
+  for (let i = 6; i >= 1; i--) points.push([i * 14.285, 91 + random() * 7]);
+  points.push([0, 92 + random() * 6]);
   return { tilt, opacity, points };
 }

@@ -23,3 +23,6 @@
 | 018 | [Fix] rich_text_size_default | 字号默认项与动态字体值 | 消除工具条空值 | ✅ 已完成 |
 | 019 | [Test] nickname_format_defaults | 昵称粗体开关与默认字号回归 | 验证字体编辑真正改变导出 | ✅ 已完成 |
 | 020 | [Style] form_polish | 统一表单节奏、工具条、选项与滑块样式 | 用户反馈界面杂乱 | ✅ 已完成 |
+| 021 | [Feature] local_persistence | 填写内容、图片与选项缓存到浏览器 IndexedDB | 用户反馈刷新后丢失填写 | completed |
+| 022 | [Feature] qr_auto_crop | 二维码自动裁切兜底、移除数量选择改为按需排列 | 用户希望自动剪切且数量按需 | completed |
+| 023 | [Update] form_and_card | 昵称纯文本、梦男、中氪、插入干员、荧光笔、头像选择器样式 | 用户反馈调整 | completed |

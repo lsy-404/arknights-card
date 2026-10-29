@@ -56,6 +56,16 @@ function scaledImageDataUrl(file) {
   });
 }
 
+function embedImage(editor, source, size) {
+  const { quill } = editor;
+  const range = editor.savedRange ?? quill.getSelection() ?? { index: quill.getLength() - 1, length: 0 };
+  const Delta = window.Quill.import('delta');
+  quill.updateContents(new Delta().retain(range.index).insert({ image: source }, size ? { size: `${size}px` } : undefined), 'user');
+  quill.setSelection(range.index + 1, 0, 'silent');
+  editor.savedRange = quill.getSelection();
+  quill.focus();
+}
+
 function loadQuill() {
   if (window.Quill) return Promise.resolve(window.Quill);
   if (!quillPromise) {
@@ -183,12 +193,7 @@ function buildToolbar(container, editor) {
     imageInput.value = '';
     if (!file) return;
     try {
-      const source = await scaledImageDataUrl(file);
-      const range = editor.savedRange ?? editor.quill.getSelection() ?? { index: editor.quill.getLength() - 1, length: 0 };
-      editor.quill.insertEmbed(range.index, 'image', source, 'user');
-      editor.quill.setSelection(range.index + 1, 0, 'silent');
-      editor.savedRange = editor.quill.getSelection();
-      editor.quill.focus();
+      embedImage(editor, await scaledImageDataUrl(file));
     } catch { }
   });
   makeButton('插入图片', 'image', () => imageInput.click());
@@ -252,6 +257,20 @@ export async function createRichText(container, {
     setText(text) {
       quill.setText(String(text).slice(0, maxLength), 'silent');
       editor.savedRange = null;
+    },
+    getDelta: () => quill.getContents().ops,
+    setDelta(delta) {
+      quill.setContents(delta, 'silent');
+      editor.savedRange = null;
+    },
+    insertImage: (source, size) => embedImage(editor, source, size),
+    addToolbarButton(label, onClick) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.addEventListener('mousedown', (event) => event.preventDefault());
+      button.addEventListener('click', onClick);
+      toolbar.append(button);
     },
   };
 }

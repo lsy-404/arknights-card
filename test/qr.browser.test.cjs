@@ -170,7 +170,7 @@ const fail = (message) => {
       );
     if (
       automatic.failure ||
-      !automatic.message.includes("未找到") ||
+      !automatic.message.includes("未能定位") ||
       !automatic.edgeDetected
     )
       fail(`No-QR or edge behavior failed: ${JSON.stringify(automatic)}`);

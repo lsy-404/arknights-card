@@ -87,23 +87,21 @@
 
 .rich-field { --field-pad: 10px; }
 .rich-field .rich-text-editor { transform-origin: top left; }
-.rich-field.nickname .rich-text-editor { width: 770%; height: 770%; transform: scale(.13); transform-origin: top left; }
 .rich-field.motto .rich-text-editor { width: 125%; height: 125%; transform: scale(.8); }
 .rich-field.quote .rich-text-editor,
 .rich-field.oshi .rich-text-editor,
 .rich-field.extra .rich-text-editor { width: 150%; height: 150%; transform: scale(.667); }
-.rich-field.nickname .ql-editor { padding: calc(var(--field-pad) / .13) !important; }
 .rich-field.motto .ql-editor { padding: calc(var(--field-pad) / .8) !important; }
 .rich-field.quote .ql-editor,
 .rich-field.oshi .ql-editor,
 .rich-field.extra .ql-editor { padding: calc(var(--field-pad) / .667) !important; }
 .rich-field .ql-editor.ql-blank::before { left: calc(var(--ql-pad, 0px)); right: var(--ql-pad, 0px); color: #9aa09a; font-style: normal; }
-.rich-field.nickname .ql-editor.ql-blank::before { --ql-pad: calc(var(--field-pad) / .13); }
 .rich-field.motto .ql-editor.ql-blank::before { --ql-pad: calc(var(--field-pad) / .8); }
 .rich-field.quote .ql-editor.ql-blank::before,
 .rich-field.oshi .ql-editor.ql-blank::before,
 .rich-field.extra .ql-editor.ql-blank::before { --ql-pad: calc(var(--field-pad) / .667); }
 .rich-text-editor .ql-editor img { width: auto; height: 1em; max-width: none; vertical-align: -.15em; }
+.rich-field.oshi .ql-editor { overflow-y: auto; }
 
 .rich-text-editor .ql-editor {
   width: 100%;

@@ -4,7 +4,7 @@ import { drawMarker } from "./marker.js";
 import { FONT } from "./typography.js";
 const logoMasks = new WeakMap();
 
-export function drawProfile(canvas, profile, faction, operators = [], images = {}, { editing = true } = {}) {
+export function drawProfile(canvas, profile, faction, images = {}, { editing = true } = {}) {
   const ctx = canvas.getContext("2d");
   const scale = canvas.width / SHEET.width;
   ctx.save();
@@ -52,8 +52,7 @@ export function drawProfile(canvas, profile, faction, operators = [], images = {
   if (!editing) drawRichText(ctx, profile.richText?.motto || [], { ...LAYOUT.motto, fontSize: mottoFontSize(profile.motto), color: "#171918", fontFamily: FONT, lineHeight: 1 });
 
   drawPortrait(ctx, images.avatar, editing);
-  if (Number(profile.qrCount) >= 1) drawQr(ctx, images.qr1, LAYOUT.qr[0], 1, editing);
-  if (Number(profile.qrCount) >= 2) drawQr(ctx, images.qr2, LAYOUT.qr[1], 2, editing);
+  [images.qr1, images.qr2].filter(Boolean).forEach((image, i) => drawContain(ctx, image, LAYOUT.qr[i].x, LAYOUT.qr[i].y, LAYOUT.qr[i].width, LAYOUT.qr[i].height));
   drawCorners(ctx, Boolean(images.avatar));
 
   sectionTag(ctx, 120, 747, "基础信息");
@@ -66,20 +65,11 @@ export function drawProfile(canvas, profile, faction, operators = [], images = {
   text("About me◢", 132, 1129, 35, "#171918", 700);
   text("我推的角色 /cp/cb", 735, 1174, 23, "#171918", 400);
   line(735, 1184, 1115, 1184, "#777", 1.5);
-  if (!editing) drawRichText(ctx, profile.richText?.oshi || [], { ...LAYOUT.oshi, fontSize: 24, color: "#171918", fontFamily: FONT });
+  if (!editing) drawRichText(ctx, profile.richText?.oshi || [], { ...LAYOUT.oshi, fontSize: 24, color: "#171918", fontFamily: FONT, lineHeight: 1 });
 
   SLIDERS.forEach((slider, i) => drawSlider(ctx, slider, i, profile.sliders?.[slider.key] ?? slider.value));
   drawSliderPlaceholders(ctx);
 
-  const ops = operators.slice(0, 8);
-  ops.forEach((op, i) => {
-    const x = 742 + (i % 4) * 112;
-    const y = 1210 + Math.floor(i / 4) * 112;
-    const img = images.operators?.get(op.id);
-    ctx.fillStyle = "#eee"; ctx.fillRect(x, y, 96, 92);
-    if (img?.complete && img.naturalWidth) drawCover(ctx, img, x, y, 96, 92);
-    text(String(op.name || "").slice(0, 8), x, y + 108, 15, "#252825", 500);
-  });
   text("▪", LAYOUT.supplement.bulletX, LAYOUT.supplement.baseline, 22, "#171918", 700);
   text("补充", LAYOUT.supplement.labelX, LAYOUT.supplement.baseline, 28, "#171918", 400);
   line(LAYOUT.supplement.ruleX, LAYOUT.supplement.ruleY, LAYOUT.supplement.ruleX + LAYOUT.supplement.ruleWidth, LAYOUT.supplement.ruleY, "#171918", 2);
@@ -112,20 +102,14 @@ export function barcodeValue(nickname) {
 }
 function drawNickname(ctx, profile) {
   const baseFontSize = 132;
-  const baseBold = !profile.nickname;
-  const sourceRuns = profile.richText?.nickname?.length
-    ? profile.richText.nickname
-    : [{ text: profile.nickname || "此处填名字", color: profile.nickname ? undefined : "#999999" }];
-  const runs = sourceRuns.map((run) => ({ ...run, text: String(run.text ?? "").replace(/[\r\n]+/gu, " ") }));
-  let width = 0;
-  for (const run of runs) {
-    const size = Number(run.size) || baseFontSize;
-    ctx.font = `${(run.bold ?? baseBold) ? 700 : 400} ${size}px ${FONT}`;
-    width += ctx.measureText(run.text).width;
-  }
+  const filled = Boolean(profile.nickname);
+  const value = (profile.nickname || "此处填名字").replace(/\s+/gu, " ");
+  ctx.save();
+  ctx.font = `${filled ? 400 : 700} ${baseFontSize}px ${FONT}`;
+  const width = ctx.measureText(value).width;
+  ctx.restore();
   const scale = width > LAYOUT.nickname.width ? LAYOUT.nickname.width / width : 1;
-  const fittedRuns = runs.map((run) => run.size ? { ...run, size: Number(run.size) * scale } : run);
-  drawRichText(ctx, fittedRuns, { ...LAYOUT.nickname, fontSize: baseFontSize * scale, color: "#171918", fontFamily: FONT, bold: baseBold, lineHeight: 1, singleLine: true });
+  drawRichText(ctx, [{ text: value, color: filled ? undefined : "#999999" }], { ...LAYOUT.nickname, fontSize: baseFontSize * scale, color: "#171918", fontFamily: FONT, bold: !filled, lineHeight: 1, singleLine: true });
 }
 
 function drawSiteQr(ctx, value, x, y, size) {
@@ -155,26 +139,29 @@ function drawBarcode(ctx, nickname) {
 function sectionTag(ctx, x, y, label, tagWidth = 220, lineWidth = 541) { ctx.fillStyle = "#171918"; ctx.beginPath(); ctx.roundRect(x, y, tagWidth, 34, 4); ctx.fill(); ctx.fillRect(x + tagWidth, y + 34, lineWidth, 2); ctx.font = `700 28px ${FONT}`; ctx.fillStyle = "#fff"; ctx.fillText(label, x + 13, y + 27); }
 function drawCorners(ctx, hasPortrait) { ctx.save(); ctx.strokeStyle = "#171918"; ctx.lineWidth = 13; ctx.beginPath(); ctx.moveTo(1026.5, 522); ctx.lineTo(1026.5, 422.5); ctx.lineTo(1127, 422.5); ctx.moveTo(1307, 802); ctx.lineTo(1408, 802); ctx.lineTo(1408, 701); ctx.stroke(); if (!hasPortrait) { ctx.strokeStyle = "#e9e9e9"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(1032, 840); ctx.lineTo(1432, 431); ctx.stroke(); } ctx.restore(); }
 function drawPortrait(ctx, image, editing) { const r = LAYOUT.portrait; if (image) drawCover(ctx, image, r.x, r.y, r.width, r.height); else if (editing) { ctx.fillStyle = "#eee"; ctx.fillRect(r.x, r.y, r.width, r.height); ctx.fillStyle = "#171918"; ctx.font = `700 70px ${FONT}`; ctx.textAlign = "center"; ctx.fillText("此处", r.x + r.width / 2, r.y + 136); ctx.fillText("头像", r.x + r.width / 2, r.y + 244); ctx.textAlign = "left"; } }
-function drawQr(ctx, image, r, number, placeholder) { if (image) drawContain(ctx, image, r.x, r.y, r.width, r.height); else if (placeholder) { ctx.fillStyle = "#f4f4f4"; ctx.fillRect(r.x, r.y, r.width, r.height); ctx.fillStyle = "#a4a4a4"; ctx.font = `500 27px ${FONT}`; ctx.textAlign = "center"; ctx.fillText(`二维码${number}`, r.x + r.width / 2, r.y + r.height / 2); ctx.textAlign = "left"; } }
 const TRACK_YS = [1220, 1352, 1477, 1631, 1768, 1915, 2057];
 const TRACK_XS = [121, 122, 123, 123, 120, 117, 121];
 const TRACK_X2S = [498, 500, 501, 501, 498, 495, 499];
-function drawSlider(ctx, item, i, value) { const x = TRACK_XS[i], x2 = TRACK_X2S[i], width = x2 - x, trackY = TRACK_YS[i]; ctx.font = `400 33px ${FONT}`; ctx.fillStyle = "#171918"; ctx.fillText(item.title, x, trackY - 38); ctx.fillStyle = "#222"; ctx.fillRect(x, trackY - 1, x2 - x + 1, 3); ctx.fillRect(x - 1, trackY - 14, 3, 16); ctx.fillRect(x2 - 1, trackY - 14, 3, 16); if (i === 0) { for (const fraction of [1 / 3, 2 / 3]) ctx.fillRect(Math.round(x + width * fraction) - 1, trackY - 13, 3, 15); } else ctx.fillRect(Math.round((x + x2) / 2) - 1, trackY - 13, 3, 15); { const ratio = Math.max(0, Math.min(100, Number(value))) / 100; ctx.fillStyle = "#61b9e6"; ctx.beginPath(); ctx.arc(x + width * ratio, trackY, 11, 0, Math.PI * 2); ctx.fill(); } ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "left"; ctx.fillText(item.left, x - 21, trackY + 42); ctx.textAlign = "right"; ctx.fillText(item.right, x2 + 20, trackY + 42); ctx.textAlign = "left"; }
-function drawSliderPlaceholders(ctx) { SLIDERS.forEach((item, i) => { ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "center"; if (i === 0) { ctx.fillText("微氪", TRACK_XS[i] + (TRACK_X2S[i] - TRACK_XS[i]) / 3, TRACK_YS[i] + 42); ctx.fillText("中氪", TRACK_XS[i] + 2 * (TRACK_X2S[i] - TRACK_XS[i]) / 3, TRACK_YS[i] + 42); } else if (item.mid) ctx.fillText(item.mid, (TRACK_XS[i] + TRACK_X2S[i]) / 2, TRACK_YS[i] + 42); ctx.textAlign = "left"; }); }
+function drawSlider(ctx, item, i, value) { const x = TRACK_XS[i], x2 = TRACK_X2S[i], width = x2 - x, trackY = TRACK_YS[i]; ctx.font = `400 33px ${FONT}`; ctx.fillStyle = "#171918"; ctx.fillText(item.title, x, trackY - 38); ctx.fillStyle = "#222"; ctx.fillRect(x, trackY - 1, x2 - x + 1, 3); ctx.fillRect(x - 1, trackY - 14, 3, 16); ctx.fillRect(x2 - 1, trackY - 14, 3, 16); for (const fraction of item.mids.length === 2 ? [1 / 3, 2 / 3] : [1 / 2]) ctx.fillRect(Math.round(x + width * fraction) - 1, trackY - 13, 3, 15); { const ratio = Math.max(0, Math.min(100, Number(value))) / 100; ctx.fillStyle = "#61b9e6"; ctx.beginPath(); ctx.arc(x + width * ratio, trackY, 11, 0, Math.PI * 2); ctx.fill(); } ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "left"; ctx.fillText(item.left, x - 21, trackY + 42); ctx.textAlign = "right"; ctx.fillText(item.right, x2 + 20, trackY + 42); ctx.textAlign = "left"; }
+function drawSliderPlaceholders(ctx) { SLIDERS.forEach((item, i) => { ctx.font = `400 23px ${FONT}`; ctx.fillStyle = "#555"; ctx.textAlign = "center"; item.mids.forEach((label, k) => ctx.fillText(label, TRACK_XS[i] + (k + 1) * (TRACK_X2S[i] - TRACK_XS[i]) / (item.mids.length + 1), TRACK_YS[i] + 42)); ctx.textAlign = "left"; }); }
 function drawOptions(ctx, profile) {
-  const groups = { gender: OPTIONS.gender, contact: OPTIONS.contact, server: OPTIONS.server, seniority: OPTIONS.seniority, focus: OPTIONS.focus };
   const selected = { gender: profile.gender ? [profile.gender] : [], contact: profile.contacts || [], server: profile.server || [], seniority: profile.seniority || [], focus: profile.focus || [] };
   const geometry = { gender: 805, contact: 858, server: 911, seniority: 964, focus: 1017 };
-  for (const [group, items] of Object.entries(groups)) {
+  for (const [group, items] of Object.entries(OPTIONS)) {
     const y = geometry[group], x = LAYOUT.optionStartX;
     ctx.font = `700 ${group === "focus" ? 27 : 31}px ${FONT}`;
+    const spans = [];
     let prefix = "";
-    for (const value of items) {
-      const left = x + ctx.measureText(prefix).width;
-      const width = ctx.measureText(value).width;
-      if (selected[group].includes(value)) drawMarker(ctx, left - 2, y + 2, width + 4, 34, "#62c5ed", profile.markerSeeds?.[`${group}:${value}`] || 1);
+    items.forEach((value, index) => {
+      const left = x + (prefix ? ctx.measureText(`${prefix}/`).width : 0);
       prefix += `${prefix ? "/" : ""}${value}`;
-    }
+      if (!selected[group].includes(value)) return;
+      const right = x + ctx.measureText(prefix).width;
+      const last = spans.at(-1);
+      if (last?.index === index - 1) Object.assign(last, { right, index });
+      else spans.push({ left, right, index, value });
+    });
+    for (const span of spans) drawMarker(ctx, span.left - 3, y + 1, span.right - span.left + 6, 36, "#62c5ed", profile.markerSeeds?.[`${group}:${span.value}`] || 1);
     ctx.fillStyle = "#171918";
     ctx.fillText(prefix, x, y + 31);
   }

@@ -72,7 +72,7 @@ async function pngMetrics(page, png) {
         box({ x: 790, y: 486, width: 200, height: 200 }, isDark),
       ],
       portrait: { x: 1044, y: 438, width: 350, height: 350 },
-      operatorImagePixels: box({ x: 742, y: 1210, width: 96, height: 92 }, (r, g, b) =>
+      operatorImagePixels: box({ x: 735, y: 1195, width: 140, height: 140 }, (r, g, b) =>
         Math.max(r, g, b) - Math.min(r, g, b) > 18 || Math.abs(r - 238) > 12 || Math.abs(g - 238) > 12 || Math.abs(b - 238) > 12),
       emptyCode: box({ x: 1400, y: 194, width: 112, height: 44 }, isDark),
       choiceMarker: box({ x: 280, y: 770, width: 140, height: 65 }, (r, g, b) => b > r + 24 && g > r + 12 && b > 180),
@@ -98,48 +98,10 @@ async function exportPng(page) {
     const failures = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/web/index.html`);
-    await page.locator('#field-nickname .ql-editor').waitFor();
+    await page.locator('#field-nickname').waitFor();
     await page.locator('#export-scale').selectOption('1');
 
-    const nickname = page.locator('#field-nickname .ql-editor');
-    const toolbarSize = page.locator('#toolbar-nickname [aria-label="字号"]');
-    const boldButton = page.locator('#toolbar-nickname [aria-label="粗体"]');
-    await nickname.click();
-    const nicknameDefaultLabel = await toolbarSize.locator('option:checked').innerText();
-    if (await toolbarSize.inputValue() !== '' || nicknameDefaultLabel !== '默认 · 132') {
-      failures.push(`Unformatted nickname should expose the 132px default option: ${nicknameDefaultLabel}`);
-    }
-    await nickname.fill('Font Test');
-    await nickname.press('Control+A');
-    const regularNickname = await pngMetrics(page, await exportPng(page));
-    await boldButton.click();
-    const boldNickname = await pngMetrics(page, await exportPng(page));
-    if (await boldButton.getAttribute('aria-pressed') !== 'true' || regularNickname.nickname.bits === boldNickname.nickname.bits) {
-      failures.push('Toggling nickname bold on must visibly change the exported glyph pixels.');
-    }
-    await boldButton.click();
-    const restoredWeight = await pngMetrics(page, await exportPng(page));
-    if (await boldButton.getAttribute('aria-pressed') !== 'false' || regularNickname.nickname.bits !== restoredWeight.nickname.bits) {
-      failures.push('Toggling nickname bold off must restore the original exported glyph pixels.');
-    }
-    await nickname.press('Control+A');
-    await toolbarSize.selectOption('120px');
-    const explicitSize = await toolbarSize.inputValue();
-    const explicitSizePixels = await pngMetrics(page, await exportPng(page));
-    if (explicitSize !== '120px' || regularNickname.nickname.bits === explicitSizePixels.nickname.bits) {
-      failures.push(`Selecting 120px should change the selected nickname's exported glyph pixels: ${explicitSize}`);
-    }
-    await nickname.press('Control+A');
-    await page.locator('#toolbar-nickname [aria-label="清除格式"]').click();
-    await nickname.press('Control+A');
-    const restoredDefaultLabel = await toolbarSize.locator('option:checked').innerText();
-    if (await toolbarSize.inputValue() !== '' || restoredDefaultLabel !== '默认 · 132') {
-      failures.push(`Clearing explicit nickname formatting should restore the 132px default option: ${restoredDefaultLabel}`);
-    }
-    const restoredSize = await pngMetrics(page, await exportPng(page));
-    if (regularNickname.nickname.bits !== restoredSize.nickname.bits) {
-      failures.push('Clearing explicit nickname size should restore the default-size Canvas pixels.');
-    }
+    const nickname = page.locator('#field-nickname');
     await nickname.fill('Alpha');
     const alpha = await pngMetrics(page, await exportPng(page));
     await nickname.fill('Beta');
@@ -224,7 +186,7 @@ async function exportPng(page) {
       }
     }
 
-    await page.locator('#operator-open').click();
+    await page.locator('#toolbar-oshi').getByText('插入干员', { exact: true }).click();
     const operatorMore = page.locator('#operator-more');
     let catalogCount = await page.locator('#operator-results .operator-card').count();
     for (let pageIndex = 0; pageIndex < 10 && catalogCount < 434; pageIndex++) {
@@ -240,7 +202,7 @@ async function exportPng(page) {
     }
     await search.fill('');
     await page.locator('#operator-results [data-operator="char_4231_clemnt"]').click();
-    await page.locator('#selected-operators [data-remove="char_4231_clemnt"]').waitFor();
+    await page.locator('#field-oshi img').waitFor();
     await page.locator('#operator-close').click();
     await page.waitForFunction(() => performance.getEntriesByType('resource').some((entry) =>
       entry.name.endsWith('/assets/operators/char_4231_clemnt.png')));
@@ -252,9 +214,9 @@ async function exportPng(page) {
     const fixture = fs.readFileSync(path.join(__dirname, 'fixtures', 'chat-screenshot.png'));
     const qrFile = { name: 'chat-screenshot.png', mimeType: 'image/png', buffer: fixture };
     const uploadQr = async (slot) => {
-      await page.locator(`[data-qr-slot="${slot}"] .qr-file`).setInputFiles(qrFile);
+      await page.locator(`[data-qr-slot="${slot}"] .slot-file`).setInputFiles(qrFile);
       await page.waitForFunction((name) => {
-        const text = document.querySelector(`[data-qr-slot="${name}"] .qr-status`).textContent;
+        const text = document.querySelector(`[data-qr-slot="${name}"] .slot-status`).textContent;
         return text.includes('二维码') && !text.includes('正在');
       }, slot);
     };
@@ -268,10 +230,10 @@ async function exportPng(page) {
       target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer }));
     }, fixture.toString('base64'));
     await page.waitForFunction(() => {
-      const status = document.querySelector('[data-qr-slot="qr2"] .qr-status').textContent;
+      const status = document.querySelector('[data-qr-slot="qr2"] .slot-status').textContent;
       return status.includes('二维码') || status.includes('无法');
     }, undefined, { timeout: 1500 }).catch(() => {});
-    const dropStatus = await page.locator('[data-qr-slot="qr2"] .qr-status').innerText();
+    const dropStatus = await page.locator('[data-qr-slot="qr2"] .slot-status').innerText();
     if (!dropStatus.includes('二维码')) {
       failures.push(`Dropping an image on the second QR slot did not import it: ${JSON.stringify(dropStatus)}`);
     }
@@ -280,15 +242,15 @@ async function exportPng(page) {
       bothQr.qr.some((box, index) => box.x + box.width > bothQr.portrait.x)) {
       failures.push(`Both exported QR images must render to the left of the portrait: ${JSON.stringify({ qr: bothQr.qr, portrait: bothQr.portrait })}`);
     }
-    await page.locator('#qr-count').selectOption('1');
-    const oneQr = await pngMetrics(page, await exportPng(page));
-    if (!oneQr.qr[0] || oneQr.qr[0].count < 100 || oneQr.qr[1]) {
-      failures.push(`Setting qrCount to 1 must remove the second exported QR: ${JSON.stringify(oneQr.qr)}`);
+    await page.locator('[data-qr-slot="qr1"] .clear-slot').click();
+    const packedQr = await pngMetrics(page, await exportPng(page));
+    if (!packedQr.qr[0] || packedQr.qr[0].count < 100 || packedQr.qr[1]) {
+      failures.push(`Clearing the first QR must move the remaining QR into the first position: ${JSON.stringify(packedQr.qr)}`);
     }
-    await page.locator('#qr-count').selectOption('2');
+    await uploadQr('qr1');
     const restoredQr = await pngMetrics(page, await exportPng(page));
     if (!restoredQr.qr[0] || !restoredQr.qr[1]) {
-      failures.push(`Returning qrCount to 2 must retain both QR slots: ${JSON.stringify(restoredQr.qr)}`);
+      failures.push(`Adding a second QR must render both slots: ${JSON.stringify(restoredQr.qr)}`);
     }
     if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);
     if (failures.length) throw new Error(failures.join('\n'));

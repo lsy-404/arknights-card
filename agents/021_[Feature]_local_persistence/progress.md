@@ -1,4 +1,0 @@
-- 新增 web/storage.js（IndexedDB 单记录 profile，可存 Blob，错误静默）
-- rich-text.js 增 getDelta/setDelta；app.js 增 buildState/restore*，保存防抖 400ms，restoring 期间不保存，页面隐藏时立即保存
-- 页脚增“清除已保存内容”（确认后清库并刷新）
-- 浏览器验证：填写→刷新，昵称、选项、阵营、干员图片、头像与两个二维码全部恢复
